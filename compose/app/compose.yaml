@@ -1,0 +1,209 @@
+# compose/app/compose.yaml — the vault_crypto application stack.
+#
+#   rotator      keeps the cryptolab-api and web-tls secret-ids valid (Durin pattern)
+#   vault-agent  cryptolab-api: token file in the `agent-token` volume, read by api
+#   tls-agent    web-tls: renders the web server's certificate (classic chain) into `web-tls`
+#   api          cryptolab, the Node API; reads the token file per call, no VAULT_TOKEN env var
+#   web          nginx over TLS with tls-agent's certificate; React SPA + /api proxy
+#
+# The only credential handed over by a human is the rotator's own, in
+# .secrets/vault/rotator/ (make rotator-bootstrap). Images are built by
+# `make app-build`. Needs vault-1 configured by Terraform (make tf-all).
+
+services:
+  # One-shot: chown named volumes. uid 100 (vault) writes the AppRole files,
+  # the token sink and the web certificate; gid 1000 (api, web) reads them.
+  volume-init:
+    image: ${ALPINE_IMAGE}
+    container_name: vcry-app-volume-init
+    user: "0:0"
+    network_mode: none
+    entrypoint:
+      - /bin/sh
+      - -c
+      - >-
+        chown 100:1000 /sink /approle /web-tls && chmod 750 /sink /web-tls && chmod 700 /approle &&
+        echo '[volume-init] done'
+    volumes:
+      - agent-token:/sink
+      - approle-app:/approle
+      - web-tls:/web-tls
+    restart: "no"
+
+  rotator:
+    image: ${VAULT_ENT_IMAGE}
+    container_name: vcry-rotator
+    hostname: rotator
+    user: "100:1000"
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    read_only: true
+    tmpfs: [/tmp, /home/vault]
+    entrypoint: ["/bin/sh", "/vault/rotator/rotator.sh"]
+    environment:
+      VAULT_ADDR: https://vault-1:8200
+      VAULT_CACERT: /vault/tls/ca-chain.pem
+      TARGET_ROLES: cryptolab-api web-tls
+      ROTATOR_CREDS_DIR: /run/rotator
+      CHECK_INTERVAL_SECONDS: "60"
+      ROTATE_BELOW_FRACTION: "3"
+      WARN_IF_SHORTER_THAN: "7776000"
+    volumes:
+      - ../../vault-tls/ca-chain.pem:/vault/tls/ca-chain.pem:ro
+      - ../common/rotator:/vault/rotator:ro
+      - ../../.secrets/vault/rotator:/run/rotator:ro        # human-delivered credential
+      - approle-app:/run/approle                            # persistent: current secret-ids
+    networks: [default]
+    restart: unless-stopped
+    depends_on:
+      volume-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "/bin/sh /vault/rotator/healthcheck.sh"]
+      interval: 10s
+      timeout: 3s
+      start_period: 15s
+      retries: 5
+
+  vault-agent:
+    image: ${VAULT_ENT_IMAGE}
+    container_name: vcry-vault-agent
+    hostname: vault-agent
+    user: "100:1000"
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    read_only: true
+    tmpfs: [/tmp, /home/vault]
+    entrypoint: ["/bin/sh", "/vault/agent/entrypoint.sh"]
+    environment:
+      AGENT_NAME: cryptolab-api
+      APPROLE_DIR: /run/approle/cryptolab-api
+      TOKEN_FILE: /vault/secrets/token
+      VAULT_ADDR: https://vault-1:8200
+      VAULT_CACERT: /vault/tls/ca-chain.pem
+    volumes:
+      - ../../vault-tls/ca-chain.pem:/vault/tls/ca-chain.pem:ro
+      - ../common/agent/entrypoint.sh:/vault/agent/entrypoint.sh:ro
+      - ./agent/config.hcl:/vault/agent/config.hcl:ro
+      - approle-app:/run/approle:ro       # written by the rotator
+      - agent-token:/vault/secrets        # ephemeral: token sink
+    networks: [default]
+    restart: on-failure
+    depends_on:
+      rotator:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "test -s /vault/secrets/token && VAULT_TOKEN=$$(cat /vault/secrets/token) vault token lookup >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      start_period: 20s
+      retries: 6
+
+  tls-agent:
+    image: ${VAULT_ENT_IMAGE}
+    container_name: vcry-tls-agent
+    hostname: tls-agent
+    user: "100:1000"
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    read_only: true
+    # The token sink stays in this container. `U` chowns the tmpfs to the
+    # container user (100:1000) on every start: a plain tmpfs came back
+    # root-owned after `restart: on-failure`, and the agent crash-looped on
+    # "error creating file sink" (2026-11-03). Podman rejects uid=/gid=.
+    tmpfs: [/tmp, /home/vault, "/vault/secrets:U,mode=0700"]
+    entrypoint: ["/bin/sh", "/vault/agent/entrypoint.sh"]
+    environment:
+      AGENT_NAME: web-tls
+      APPROLE_DIR: /run/approle/web-tls
+      TOKEN_FILE: /vault/secrets/token
+      VAULT_ADDR: https://vault-1:8200
+      VAULT_CACERT: /vault/tls/ca-chain.pem
+      VCRY_WEB_CN: ${VCRY_WEB_CN}
+      VCRY_WEB_TTL: ${VCRY_WEB_TTL}
+    volumes:
+      - ../../vault-tls/ca-chain.pem:/vault/tls/ca-chain.pem:ro
+      - ../common/agent/entrypoint.sh:/vault/agent/entrypoint.sh:ro
+      - ./tls-agent/config.hcl:/vault/agent/config.hcl:ro
+      - approle-app:/run/approle:ro       # written by the rotator
+      - web-tls:/vault/web-tls            # ephemeral: the web certificate + key
+    networks: [default]
+    restart: on-failure
+    depends_on:
+      rotator:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "test -s /vault/web-tls/web.pem && VAULT_TOKEN=$$(cat /vault/secrets/token) vault token lookup >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      start_period: 20s
+      retries: 6
+
+  api:
+    image: ${VCRY_IMAGE_PREFIX}/api:${VCRY_IMAGE_TAG}
+    container_name: vcry-api
+    hostname: api
+    user: "1000:1000"
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    read_only: true
+    tmpfs: [/tmp]
+    environment:
+      PORT: "3000"
+      VAULT_ADDR: https://vault-1:8200
+      VAULT_SEAL_ADDR: https://vault-s:8200
+      VAULT_TOKEN_FILE: /run/vault/token
+      # Links into Vault's own UI, as the browser on the host reaches it.
+      VAULT_UI_URL: https://localhost:${VCRY_PORT_VAULT_1}
+      # Sign-in (prompt 08): the browser goes to the public Keycloak URL; the
+      # API exchanges codes over vcry-internal.
+      CONSOLE_URL: https://localhost:${VCRY_PORT_WEB}
+      KEYCLOAK_PUBLIC_URL: http://localhost:${VCRY_PORT_KEYCLOAK}
+      KEYCLOAK_INTERNAL_URL: http://keycloak:8080
+      # Optional load counters at /api/_stats (prompt 09 measurements). Off by default.
+      VCRY_STATS: "${VCRY_STATS:-0}"
+      # Node trusts the lab CA in addition to its bundled roots.
+      NODE_EXTRA_CA_CERTS: /etc/vcry/ca-chain.pem
+    ports: ["127.0.0.1:${VCRY_PORT_API}:3000"]
+    volumes:
+      - ../../vault-tls/ca-chain.pem:/etc/vcry/ca-chain.pem:ro
+      - agent-token:/run/vault:ro          # vault-agent's token sink
+    mem_limit: 256m
+    networks: [default]
+    restart: unless-stopped
+    depends_on:
+      vault-agent:
+        condition: service_healthy
+
+  web:
+    image: ${VCRY_IMAGE_PREFIX}/web:${VCRY_IMAGE_TAG}
+    container_name: vcry-web
+    hostname: vcry-web
+    # uid 101 is nginx; gid 1000 reads tls-agent's certificate (mode 0640).
+    user: "101:1000"
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    read_only: true
+    tmpfs: [/tmp]
+    environment:
+      NGINX_ENTRYPOINT_LOCAL_RESOLVERS: "1"
+      NGINX_ENVSUBST_OUTPUT_DIR: /tmp
+    ports: ["127.0.0.1:${VCRY_PORT_WEB}:8443"]
+    volumes:
+      - web-tls:/etc/nginx/tls:ro
+    networks: [default]
+    restart: unless-stopped
+    depends_on:
+      tls-agent:
+        condition: service_healthy
+
+networks:
+  default:
+    name: vcry-internal
+    external: true
+
+volumes:
+  agent-token: {}
+  web-tls: {}
+  approle-app:
+    labels: { io.vcry.data: "true" }

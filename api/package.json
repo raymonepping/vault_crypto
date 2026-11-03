@@ -1,0 +1,13 @@
+{
+  "name": "vault-crypto-cryptolab",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "vault_crypto API: the four Vault 2.2 rooms (ML-DSA PKI, Transit crypto agility, FF1, certificate lifecycle) through a Vault Agent token sink.",
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "start": "node server.js",
+    "test": "NODE_ENV=test node --test test/*.test.js",
+    "fixtures": "node scripts/gen-fixtures.js"
+  }
+}

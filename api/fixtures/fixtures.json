@@ -1,0 +1,102 @@
+{
+  "synthetic": true,
+  "generatedBy": "api/scripts/gen-fixtures.js",
+  "rows": [
+    {
+      "id": "card-1",
+      "kind": "card",
+      "value": "4111-1111-1111-1111",
+      "note": "Visa test"
+    },
+    {
+      "id": "card-2",
+      "kind": "card",
+      "value": "4012-8888-8888-1881",
+      "note": "Visa test"
+    },
+    {
+      "id": "card-3",
+      "kind": "card",
+      "value": "5555-5555-5555-4444",
+      "note": "Mastercard test"
+    },
+    {
+      "id": "card-4",
+      "kind": "card",
+      "value": "5105-1051-0510-5100",
+      "note": "Mastercard test"
+    },
+    {
+      "id": "card-5",
+      "kind": "card",
+      "value": "6011-1111-1111-1117",
+      "note": "Discover test"
+    },
+    {
+      "id": "card-6",
+      "kind": "card",
+      "value": "3530-1113-3330-0000",
+      "note": "JCB test"
+    },
+    {
+      "id": "iban-1",
+      "kind": "iban",
+      "value": "NL26TEST1000007919",
+      "note": "synthetic, bank code TEST"
+    },
+    {
+      "id": "iban-2",
+      "kind": "iban",
+      "value": "NL98TEST1000015838",
+      "note": "synthetic, bank code TEST"
+    },
+    {
+      "id": "iban-3",
+      "kind": "iban",
+      "value": "NL73TEST1000023757",
+      "note": "synthetic, bank code TEST"
+    },
+    {
+      "id": "iban-4",
+      "kind": "iban",
+      "value": "NL48TEST1000031676",
+      "note": "synthetic, bank code TEST"
+    },
+    {
+      "id": "iban-5",
+      "kind": "iban",
+      "value": "NL23TEST1000039595",
+      "note": "synthetic, bank code TEST"
+    },
+    {
+      "id": "bsn-1",
+      "kind": "bsn",
+      "value": "999990007",
+      "note": "test block 99999xxxx"
+    },
+    {
+      "id": "bsn-2",
+      "kind": "bsn",
+      "value": "999990147",
+      "note": "test block 99999xxxx"
+    },
+    {
+      "id": "bsn-3",
+      "kind": "bsn",
+      "value": "999990214",
+      "note": "test block 99999xxxx"
+    },
+    {
+      "id": "bsn-4",
+      "kind": "bsn",
+      "value": "999990287",
+      "note": "test block 99999xxxx"
+    },
+    {
+      "id": "bsn-5",
+      "kind": "bsn",
+      "value": "999990354",
+      "note": "test block 99999xxxx"
+    }
+  ]
+}

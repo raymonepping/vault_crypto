@@ -1,0 +1,24 @@
+ARG NODE_IMAGE=docker.io/library/node:24-alpine
+FROM ${NODE_IMAGE}
+
+# openssl 3.5+: an independent second verifier for ML-DSA chains, and OCSP
+# request building. The build fails if the image's OpenSSL is too old.
+RUN apk add --no-cache openssl && \
+    openssl version | awk '{split($2, v, "."); if (v[1] < 3 || (v[1] == 3 && v[2] < 5)) {print "OpenSSL " $2 " cannot verify ML-DSA"; exit 1}}'
+
+ENV NODE_ENV=production
+WORKDIR /app
+COPY package.json ./
+COPY server.js ./
+COPY lib ./lib
+COPY fixtures ./fixtures
+
+# uid 1000, gid 1000: reads vault-agent's token sink (mode 0640, gid 1000).
+USER 1000:1000
+EXPOSE 3000
+
+# /api/health answers 503 until vault-1 is unsealed and the agent token exists.
+HEALTHCHECK --interval=10s --timeout=4s --retries=6 --start-period=10s \
+  CMD node -e "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+
+CMD ["node", "server.js"]

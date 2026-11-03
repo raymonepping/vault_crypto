@@ -1,0 +1,83 @@
+# compose/identity/ldap/bootstrap.ldif — the lab's directory. Fictional people,
+# no passwords (setup_ldap.sh sets them from Vault KV).
+#
+#   vera  viewer                       reads every room
+#   piet  viewer + PKI operator        issues and revokes certificates
+#   kees  viewer + key custodian       rotates, signs, encrypts the Transit keys
+#   dana  viewer + data steward        encodes and decodes FF1 values
+#   olga  all four                     the demo presenter
+
+dn: ou=people,dc=vcry,dc=local
+objectClass: organizationalUnit
+ou: people
+
+dn: ou=groups,dc=vcry,dc=local
+objectClass: organizationalUnit
+ou: groups
+
+dn: uid=vera,ou=people,dc=vcry,dc=local
+objectClass: inetOrgPerson
+uid: vera
+cn: Vera Viewer
+sn: Viewer
+givenName: Vera
+mail: vera@vcry.local
+
+dn: uid=piet,ou=people,dc=vcry,dc=local
+objectClass: inetOrgPerson
+uid: piet
+cn: Piet PKI
+sn: PKI
+givenName: Piet
+mail: piet@vcry.local
+
+dn: uid=kees,ou=people,dc=vcry,dc=local
+objectClass: inetOrgPerson
+uid: kees
+cn: Kees Keys
+sn: Keys
+givenName: Kees
+mail: kees@vcry.local
+
+dn: uid=dana,ou=people,dc=vcry,dc=local
+objectClass: inetOrgPerson
+uid: dana
+cn: Dana Data
+sn: Data
+givenName: Dana
+mail: dana@vcry.local
+
+dn: uid=olga,ou=people,dc=vcry,dc=local
+objectClass: inetOrgPerson
+uid: olga
+cn: Olga Operator
+sn: Operator
+givenName: Olga
+mail: olga@vcry.local
+
+dn: cn=vcry-viewers,ou=groups,dc=vcry,dc=local
+objectClass: groupOfNames
+cn: vcry-viewers
+member: uid=vera,ou=people,dc=vcry,dc=local
+member: uid=piet,ou=people,dc=vcry,dc=local
+member: uid=kees,ou=people,dc=vcry,dc=local
+member: uid=dana,ou=people,dc=vcry,dc=local
+member: uid=olga,ou=people,dc=vcry,dc=local
+
+dn: cn=vcry-pki-operators,ou=groups,dc=vcry,dc=local
+objectClass: groupOfNames
+cn: vcry-pki-operators
+member: uid=piet,ou=people,dc=vcry,dc=local
+member: uid=olga,ou=people,dc=vcry,dc=local
+
+dn: cn=vcry-key-custodians,ou=groups,dc=vcry,dc=local
+objectClass: groupOfNames
+cn: vcry-key-custodians
+member: uid=kees,ou=people,dc=vcry,dc=local
+member: uid=olga,ou=people,dc=vcry,dc=local
+
+dn: cn=vcry-data-stewards,ou=groups,dc=vcry,dc=local
+objectClass: groupOfNames
+cn: vcry-data-stewards
+member: uid=dana,ou=people,dc=vcry,dc=local
+member: uid=olga,ou=people,dc=vcry,dc=local

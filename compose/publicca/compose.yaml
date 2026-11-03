@@ -1,0 +1,48 @@
+# compose/publicca/compose.yaml — optional: a stand-in "public" ACME CA for
+# Vault 2.2's PKI External CA secrets engine (prompt 07). Not part of make up.
+#
+#   pebble        Let's Encrypt's ACME test server, directory https://pebble:14000/dir.
+#                 Its TLS certificate is the repository's test certificate
+#                 (SANs localhost, pebble), signed by pebble.minica.pem, a CA
+#                 whose key is public: Vault trusts it only inside the one
+#                 ACME account (trusted_ca), never as a listener CA.
+#   challtestsrv  answers Pebble's DNS (every name → its own address) and
+#                 serves the HTTP-01 tokens that the API hands it.
+#
+# Nothing here reaches the internet, and nothing is a real CA.
+services:
+  pebble:
+    image: ${PEBBLE_IMAGE}
+    container_name: vcry-pebble
+    hostname: pebble
+    command: ["-config", "/test/config/pebble-config.json", "-dnsserver", "challtestsrv:8053"]
+    environment:
+      PEBBLE_VA_NOSLEEP: "1"        # validate at once, not after a random delay
+      PEBBLE_WFE_NONCEREJECT: "0"   # do not reject nonces at random
+      PEBBLE_AUTHZREUSE: "0"
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    read_only: true
+    networks:
+      default:
+        aliases: [pebble]
+    restart: unless-stopped
+
+  challtestsrv:
+    image: ${PEBBLE_CHALLTESTSRV_IMAGE}
+    container_name: vcry-challtestsrv
+    hostname: challtestsrv
+    # DNS on 8053, HTTP-01 on 5002 (Pebble's httpPort), management on 8055.
+    command: ["-dnsserver", ":8053", "-http01", ":5002", "-https01", "", "-tlsalpn01", "", "-doh", "", "-management", ":8055", "-defaultIPv6", ""]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    read_only: true
+    networks:
+      default:
+        aliases: [challtestsrv]
+    restart: unless-stopped
+
+networks:
+  default:
+    name: vcry-internal
+    external: true

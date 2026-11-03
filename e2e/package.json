@@ -1,0 +1,14 @@
+{
+  "name": "vault-crypto-e2e",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Playwright suite against the live vault_crypto stack. Nothing is mocked.",
+  "scripts": {
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "@playwright/test": "^1.64.1",
+    "@types/node": "^26.6.6"
+  }
+}

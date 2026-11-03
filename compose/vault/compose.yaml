@@ -1,0 +1,54 @@
+# compose/vault/compose.yaml — vault-1, the application Vault (ENT).
+#
+# Auto-unseals through vault-s (seal "transit" in its HCL). The Transit token
+# is delivered as a file by vault-server.sh: the seal agent's sink first,
+# the bootstrap token as fallback. There is no VAULT_TOKEN env var here.
+# Start order is handled by `make vault-up`: vault-s must be unsealed first.
+
+services:
+  vault-1:
+    image: ${VAULT_ENT_IMAGE}
+    container_name: vcry-vault-1
+    hostname: vault-1
+    user: "100:1000"
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    environment:
+      VAULT_ADDR: https://127.0.0.1:8200
+      VAULT_CACERT: /vault/config/tls/ca-chain.pem
+      # The licence is mounted as a file (not an env var) to avoid leaking it.
+      VAULT_LICENSE_PATH: /vault/config/vault.hclic
+    entrypoint: ["/bin/sh", "/vcry/vault-server.sh"]
+    ports: ["127.0.0.1:${VCRY_PORT_VAULT_1}:8200"]
+    volumes:
+      - vault-1-data:/vault/file        # persistent: Raft data
+      - vault-1-audit:/vault/audit      # persistent: audit log
+      - ../../vault/vault-1/config.hcl:/vault/config/config.hcl:ro
+      - ../../vault-tls:/vault/config/tls:ro
+      - ../../scripts/vault-server.sh:/vcry/vault-server.sh:ro
+      - ../../.secrets/vault/vault.hclic:/vault/config/vault.hclic:ro    # ENT licence
+      - ../../.secrets/vault/transit-token:/run/secrets/transit-token:ro # bootstrap fallback
+      - seal-token:/run/secrets/seal:ro                                   # seal agent sink (preferred)
+    restart: unless-stopped
+    mem_limit: 1g
+    networks: [default]
+    healthcheck:
+      test: ["CMD-SHELL", "S=$$(wget -S -qO/dev/null --no-check-certificate 'https://127.0.0.1:8200/v1/sys/health' 2>&1 | awk '/^ *HTTP\\//{print $$2; exit}'); [ -n \"$$S\" ]"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 20s
+
+networks:
+  default:
+    name: vcry-internal
+    external: true
+
+volumes:
+  vault-1-data:
+    labels: { io.vcry.data: "true" }
+  vault-1-audit:
+    labels: { io.vcry.data: "true" }
+  seal-token:
+    external: true
+    name: vcry-seal_seal-token

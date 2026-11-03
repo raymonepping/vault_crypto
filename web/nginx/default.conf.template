@@ -1,0 +1,82 @@
+# The console, served over TLS with the certificate tls-agent renders from
+# Vault (pki-classic-int/issue/web). One file holds leaf, issuing CA and key:
+# ssl_certificate reads the certificates, ssl_certificate_key the key.
+server {
+  listen      8443 ssl;
+  http2       on;
+  server_name _;
+
+  ssl_certificate     /etc/nginx/tls/web.pem;
+  ssl_certificate_key /etc/nginx/tls/web.pem;
+  ssl_protocols       TLSv1.3;
+  ssl_session_cache   off;   # every new connection sees the current certificate
+  server_tokens       off;
+
+  # Plain HTTP sent to this TLS port (someone typed http://) gets nginx's
+  # 497; send the browser to the same host:port over HTTPS instead of a 400
+  # ($http_host keeps the published port; $server_port would be 8443).
+  error_page 497 =301 https://$http_host$request_uri;
+
+  # Resolve the API by name per request; requires NGINX_ENTRYPOINT_LOCAL_RESOLVERS=1.
+  resolver ${NGINX_LOCAL_RESOLVERS} valid=10s;
+
+  add_header X-Content-Type-Options nosniff always;
+  add_header Referrer-Policy no-referrer always;
+  add_header Content-Security-Policy "default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; connect-src 'self'; frame-ancestors 'none'" always;
+
+  root  /usr/share/nginx/html;
+  index index.html;
+
+  # HTML revalidates on every visit, so a new build never strands a browser
+  # on old asset names. add_header in a location replaces the server-level
+  # headers, so the security headers are repeated in each location that sets
+  # its own (prompt 09).
+  location / {
+    try_files $uri $uri/ /index.html;
+    add_header Cache-Control "no-cache" always;
+    add_header X-Content-Type-Options nosniff always;
+    add_header Referrer-Policy no-referrer always;
+    add_header Content-Security-Policy "default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; connect-src 'self'; frame-ancestors 'none'" always;
+  }
+
+  # Vite's fingerprinted bundles and fonts: the name changes with the content,
+  # so they can be cached for a year. Compressed here only: never /api/ or
+  # /auth/, whose personalised, secret-bearing answers stay uncompressed.
+  location /assets/ {
+    try_files $uri =404;
+    gzip on;
+    gzip_comp_level 5;
+    gzip_min_length 1024;
+    gzip_types text/css application/javascript image/svg+xml;
+    gzip_vary on;
+    add_header Cache-Control "public, max-age=31536000, immutable" always;
+    add_header X-Content-Type-Options nosniff always;
+    add_header Referrer-Policy no-referrer always;
+    add_header Content-Security-Policy "default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; connect-src 'self'; frame-ancestors 'none'" always;
+  }
+
+  # Sign-in round trip (the API is the console's BFF).
+  location /auth/ {
+    set $api "http://vcry-api:3000";
+    proxy_pass $api;
+    proxy_set_header Host              $host;
+    proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto https;
+  }
+
+  location /api/ {
+    set $api "http://vcry-api:3000";
+    proxy_pass $api;
+    proxy_set_header Host              $host;
+    proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto https;
+    proxy_read_timeout 60s;
+  }
+}
+
+# Container health only; not published.
+server {
+  listen 8080;
+  location = /nginx-health { access_log off; return 200 "ok\n"; }
+  location / { return 404; }
+}

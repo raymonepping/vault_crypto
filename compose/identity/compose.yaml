@@ -1,0 +1,159 @@
+# compose/identity/compose.yaml — who may do what (prompt 08).
+#
+# OpenLDAP (the directory) + Keycloak (OIDC for the console). Topology and
+# scripts from Project Durin / Arcanium.
+#
+#   directory  dc=vcry,dc=local, groups vcry-viewers, vcry-pki-operators,
+#              vcry-key-custodians, vcry-data-stewards; personas vera, piet,
+#              kees, dana, olga (fictional)
+#   realm      vcry, read-only LDAP federation, `groups` claim
+#   clients    vcry-console (the console's BFF, code + PKCE), vcry-cli (lab only)
+#
+# Every password lives in Vault KV (kv/vcry/identity/*, scripts/identity-secrets.sh).
+# identity-secrets-init logs in once with AppRole identity-secrets, renders the
+# values onto the identity-secrets volume and revokes its token; nothing here
+# reads .env for a secret. Vault reaches Keycloak at keycloak:8080 (JWKS);
+# browsers at http://localhost:${VCRY_PORT_KEYCLOAK}.
+
+services:
+  identity-secrets-init:
+    image: ${VAULT_ENT_IMAGE}
+    container_name: vcry-identity-secrets-init
+    # Root inside the container: the fresh identity-secrets volume is root-owned.
+    entrypoint: ["/bin/sh", "/init/entrypoint.sh"]
+    environment:
+      VAULT_ADDR: https://vault-1:8200
+      VAULT_CACERT: /vault/tls/ca-chain.pem
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    read_only: true
+    tmpfs: [/tmp, /home/vault]
+    volumes:
+      - ../../vault-tls/ca-chain.pem:/vault/tls/ca-chain.pem:ro
+      - ./identity-secrets/entrypoint.sh:/init/entrypoint.sh:ro
+      # Only this identity's two AppRole files, never .secrets/vault itself.
+      - ../../.secrets/vault/identity:/approle:ro
+      - identity-secrets:/run/secrets
+    networks: [default]
+    restart: "no"
+
+  openldap:
+    image: ${OPENLDAP_IMAGE}
+    container_name: vcry-openldap
+    hostname: openldap
+    environment:
+      LDAP_ORGANISATION: "Vault Crypto Lab"
+      LDAP_DOMAIN: "vcry.local"
+      LDAP_BASE_DN: "dc=vcry,dc=local"
+      LDAP_ADMIN_PASSWORD_FILE: "/run/secrets/ldap-admin-password"
+      LDAP_TLS: "false"
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE, CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETUID, KILL]
+    security_opt: ["no-new-privileges:true"]
+    volumes:
+      - ldap-data:/var/lib/ldap
+      - ldap-config:/etc/ldap/slapd.d
+      - identity-secrets:/run/secrets:ro
+    networks:
+      default:
+        aliases: [openldap]
+    restart: unless-stopped
+    depends_on:
+      identity-secrets-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "ldapsearch -x -H ldap://localhost -D cn=admin,dc=vcry,dc=local -w \"$$(cat /run/secrets/ldap-admin-password)\" -b dc=vcry,dc=local -s base >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  # One-shot: entries from bootstrap.ldif, passwords from Vault KV.
+  ldap-bootstrap:
+    image: ${OPENLDAP_IMAGE}
+    container_name: vcry-ldap-bootstrap
+    profiles: ["init"]
+    environment:
+      LDAP_BASE_DN: "dc=vcry,dc=local"
+      LDAP_HOST: "openldap"
+    entrypoint: ["/bootstrap/setup_ldap.sh"]
+    volumes:
+      - ./ldap:/bootstrap:ro
+      - identity-secrets:/run/secrets:ro
+    networks: [default]
+    depends_on:
+      openldap:
+        condition: service_healthy
+
+  keycloak:
+    image: ${KEYCLOAK_IMAGE}
+    container_name: vcry-keycloak
+    hostname: keycloak
+    # Exports the Vault-sourced bootstrap admin password, then execs kc.sh.
+    entrypoint: ["/bin/sh", "/vault/vault-entrypoint.sh"]
+    command: start-dev
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KC_HTTP_ENABLED: "true"
+      # Browser-facing issuer is fixed; internal callers (Vault JWKS, the API,
+      # kcadm) use keycloak:8080 and get backchannel URLs for it.
+      KC_HOSTNAME: "http://localhost:${VCRY_PORT_KEYCLOAK}"
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
+      KC_HOSTNAME_STRICT: "false"
+      KC_HEALTH_ENABLED: "true"
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE]
+    security_opt: ["no-new-privileges:true"]
+    ports: ["127.0.0.1:${VCRY_PORT_KEYCLOAK}:8080"]
+    volumes:
+      - keycloak-data:/opt/keycloak/data
+      - ./keycloak/vault-entrypoint.sh:/vault/vault-entrypoint.sh:ro
+      - identity-secrets:/run/secrets:ro
+    mem_limit: 1g
+    networks:
+      default:
+        aliases: [keycloak]
+    depends_on:
+      openldap:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/8080 && echo -e 'GET /realms/master/.well-known/openid-configuration HTTP/1.1\\r\\nhost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && cat <&3 | grep -q '200 OK' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 30s
+
+  # One-shot: realm, LDAP federation + mappers, clients, claims.
+  keycloak-bootstrap:
+    image: ${KEYCLOAK_IMAGE}
+    container_name: vcry-keycloak-bootstrap
+    profiles: ["init"]
+    entrypoint: ["/bin/bash", "/bootstrap/setup_keycloak.sh"]
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KC_INTERNAL_URL: "http://keycloak:8080"
+      VCRY_CONSOLE_URL: "https://localhost:${VCRY_PORT_WEB}"
+    volumes:
+      - ./keycloak:/bootstrap:ro
+      - identity-secrets:/run/secrets:ro
+    networks: [default]
+    depends_on:
+      keycloak:
+        condition: service_healthy
+      ldap-bootstrap:
+        condition: service_completed_successfully
+
+networks:
+  default:
+    name: vcry-internal
+    external: true
+
+volumes:
+  ldap-data:
+    labels: { io.vcry.data: "true" }
+  ldap-config:
+    labels: { io.vcry.data: "true" }
+  keycloak-data:
+    labels: { io.vcry.data: "true" }
+  identity-secrets: {}

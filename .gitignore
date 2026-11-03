@@ -219,3 +219,25 @@ kube/config
 .agents/
 .codex/
 .impeccable/
+
+########################################
+# 🔒 vault_crypto: private and generated
+########################################
+!.env.example
+prompts/
+input/
+article/
+backups/
+vault-tls/vault.key
+api/fixtures/generated/
+e2e/test-results/
+e2e/playwright-report/
+web/dist/
+
+# ── Added by commit_gh --harden ─────────────────────────────
+*.env
+.vault.*
+*.vault
+*.jsonl
+output/*
+!output/.gitkeep
