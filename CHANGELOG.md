@@ -4,6 +4,10 @@
 
 ### Added
 
+- CI on GitHub (unit tests, console build, `make lint`), `make lint`,
+  `make bench`, Dependabot for the npm packages, and a README section on what
+  the lab does not do.
+
 - People and authority (prompt 08): OpenLDAP + Keycloak, Vault `auth/jwt`
   (console) and `auth/ldap` (Vault UI, CLI), four human policies, five
   fictional personas, sign-in in the console, per-room authority from

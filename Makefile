@@ -15,7 +15,7 @@ NETWORK := vcry-internal
 	license-features probe tf-seal tf-platform tf-crypto tf-identity tf-all tf-plan-all tf-destroy demo-seed demo-reset pki-move pki-move-status publicca-up publicca-down publicca-probe \
 	rotator-bootstrap agents-status agents-recover rotate-now rotation-test \
 	identity-up identity-down identity-bootstrap identity-verify identity-copy-password app-build app-up app-down app-rebuild open web-cert trust-root untrust-root \
-	test-unit api-test e2e-install test-ui test-ui-headed test-ui-report screenshots \
+	bench lint test-unit api-test e2e-install test-ui test-ui-headed test-ui-report screenshots \
 	up down bootstrap verify doctor backup clean-slate \
 	$(addsuffix -logs,$(STACKS))
 
@@ -271,6 +271,12 @@ bootstrap: ## (changes state) First run, from zero to verified. Idempotent
 
 verify: ## End-to-end checks: podman, vault, crypto config, identities, api, web TLS, the four rooms
 	@./scripts/verify.sh
+
+bench: ## (changes state) Measure Vault load per API call (restarts the API with counters, then without): make bench [SAMPLES=20]
+	@./scripts/bench.sh $(or $(SAMPLES),20)
+
+lint: ## Static checks, as in CI: shellcheck, terraform fmt and validate (no stack, no state touched)
+	@./scripts/lint.sh
 
 test-unit: ## API and console unit tests (node --test; no stack needed)
 	@cd api && npm test

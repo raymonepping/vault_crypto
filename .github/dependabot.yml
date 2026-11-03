@@ -4,3 +4,15 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+  # The console and the Playwright suite. api/ has no dependencies.
+  - package-ecosystem: "npm"
+    directory: "/web"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "npm"
+    directory: "/e2e"
+    schedule:
+      interval: "weekly"
+# Container images (Vault, Node, nginx, Keycloak, OpenLDAP) are pinned in
+# config/defaults.conf, which Dependabot cannot read: bump them there and run
+# make verify, make test-ui and make probe after a Vault upgrade.

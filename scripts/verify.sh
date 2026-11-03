@@ -25,8 +25,8 @@ check() {
   if "$@" >/dev/null 2>&1; then ok "$msg"; else bad "$msg"; fi
 }
 healthy() {
-  local i
-  for i in 1 2 3 4 5 6 7 8 9 10; do
+  local _
+  for _ in 1 2 3 4 5 6 7 8 9 10; do
     [ "$(podman container inspect "$1" --format '{{.State.Health.Status}}' 2>/dev/null)" = healthy ] && return 0
     sleep 3
   done

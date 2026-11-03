@@ -67,6 +67,8 @@ Override any of them in `.env`.
 | `make rotation-test` | Breaks credentials on purpose; every case heals |
 | `make tf-plan-all` | Terraform matches Vault, also after a demo |
 | `make doctor` | Names what is wrong and the command that fixes it |
+| `make lint` | shellcheck, `terraform fmt` and `validate` (also in GitHub Actions, with the unit tests and the console build) |
+| `make bench` | Vault requests and latency per API call (`docs/optimization.md`) |
 
 `make demo-reset` puts every room back to its starting state.
 
@@ -78,6 +80,28 @@ local Pebble. On 2.2.1 Pebble validates the challenge and issues the
 certificate, but Vault's order ends in an error at finalize
 ([docs/publicca-probe.md](docs/publicca-probe.md)), so the console has no panel
 for it yet.
+
+## What this lab does not do
+
+It shows Vault 2.2's features honestly, on one laptop. A production
+deployment differs in at least these ways:
+
+- Both root CAs are online, in the same Vault as their intermediates. In
+  production a root stays offline, or at least in a separate cluster.
+- vault-s uses one Shamir key share, and each Vault is a single Raft node.
+  Production uses several key holders or an HSM or cloud KMS seal, and three or
+  five nodes.
+- Host scripts (Terraform, bootstrap, probe, demo-seed, `make pki-move`) use
+  the root tokens from `.secrets/`. Production revokes root tokens and gives
+  each tool its own auth method.
+- Keycloak runs in `start-dev` mode over plain HTTP on localhost, and the
+  `vcry-cli` client allows password grants so scripts can test as each persona.
+  Production runs Keycloak with TLS, a database and no password grant.
+- Console sessions and the demo history (signatures, ledger entries) live in
+  the API's memory: an API restart signs everyone out and empties both.
+- The five personas and their passwords are generated for the lab.
+- There is one audit file device per Vault node. Production sends audit logs to
+  two devices and a SIEM.
 
 ## Read more
 

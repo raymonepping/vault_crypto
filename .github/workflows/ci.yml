@@ -1,0 +1,47 @@
+name: CI
+
+# The checks that need no running stack (make verify and the Playwright suite
+# need Vault Enterprise with a licence; they run on the Mac). Same commands as
+# locally: npm test in api/ and web/, the console build, make lint.
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+permissions:
+  contents: read
+
+jobs:
+  unit:
+    name: Unit tests and console build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1  # v7.1.0
+        with:
+          node-version: "24"
+      - name: API unit tests (no dependencies)
+        working-directory: api
+        run: npm test
+      - name: Console dependencies
+        working-directory: web
+        run: npm ci --no-audit --no-fund
+      - name: Console unit tests
+        working-directory: web
+        run: npm test
+      - name: Console build
+        working-directory: web
+        run: npx vite build
+
+  lint:
+    name: Shell and Terraform
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e  # v4.0.1
+        with:
+          terraform_version: "1.14.2"
+          terraform_wrapper: false
+      - name: make lint
+        run: ./scripts/lint.sh

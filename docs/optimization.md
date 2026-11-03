@@ -86,8 +86,12 @@ drawer entries. `make test-unit` runs both unit suites.
 ## Re-measure
 
 ```bash
-VCRY_STATS=1 ./scripts/compose.sh app up -d --force-recreate api
-node api/scripts/bench.js 20
-SIGS=50 ONLY=verify node api/scripts/bench.js 20   # after signing 50 messages
-./scripts/compose.sh app up -d --force-recreate api  # counters off again
+make bench                     # API with counters, 20 samples per read path, API back without counters
+SAMPLES=50 make bench
 ```
+
+`make bench` measures the read paths. For verify with stored signatures, sign
+messages as olga first (the Crypto agility room), then run
+`ONLY=verify SIGS=50 node api/scripts/bench.js 20` while the API runs with
+`VCRY_STATS=1`. The API restarts twice: demo history and console sessions are
+in memory and start empty.

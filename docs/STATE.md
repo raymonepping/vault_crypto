@@ -319,3 +319,30 @@ Learned:
 - nginx `add_header` in a location replaces every inherited header: the CSP
   disappears from assets unless repeated.
 - `node --test test/` treats the directory as one file on Node 25; use a glob.
+
+## 10: Ready for a public clone (2026-11-03)
+
+Done:
+
+- `.github/workflows/ci.yml`: API and console unit tests, console build,
+  `make lint` (actions pinned by commit SHA, read-only permissions).
+- `make lint` (`scripts/lint.sh`): shellcheck at warning level (51 scripts),
+  `terraform fmt -check`, `terraform validate` per root without a backend in a
+  temp data dir. Runs under macOS `/bin/bash` 3.2 too. Fixed the one
+  shellcheck warning (`verify.sh`).
+- Dependabot: npm for `/web` and `/e2e`; a note that images are pinned in
+  `config/defaults.conf`, which it cannot read.
+- `make bench` (`scripts/bench.sh`): API with counters, `bench.js`, API back
+  without counters (trap, also on failure).
+- README: "What this lab does not do", `make lint` and `make bench` in Checks.
+- Earlier the same day, outside the numbered prompts: `config/defaults.env`
+  became `config/defaults.conf` because `commit_gh` unstages every `*.env`
+  (commit only through `commit_gh`); the sanity_check pre-commit hook was
+  removed; FF1 checksum pills read "not kept" / "valid by chance".
+
+Learned:
+
+- `gh api` against `hashicorp/*` fails with SAML enforcement on this account;
+  the unauthenticated public API answers.
+- The inventory's cost grows with every certificate the tests issue (154 Vault
+  requests per call now, 99 at prompt 09); the shared limit keeps the peak at 8.
