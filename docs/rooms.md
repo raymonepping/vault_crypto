@@ -135,7 +135,7 @@ between two FF1 transformations with different keys. It is the same call that
 migrates FF3-1 data written by an older Vault.
 
 The fixtures are synthetic: the card networks' published test numbers, IBANs
-with bank code `TEST`, and BSNs from the government's 99999 test block.
+with bank code `TEST`, and generated BSNs that pass the elfproef.
 
 ## Lifecycle
 

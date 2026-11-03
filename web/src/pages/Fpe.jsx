@@ -7,6 +7,8 @@ import { useAction, useResource } from '../hooks.js';
 import { Authority, ErrorNotice, Loading, Locked, Mono, StatePill } from '../components/ui.jsx';
 
 const KIND_LABEL = { card: 'Card number', iban: 'Dutch IBAN', bsn: 'BSN' };
+// How often a random value of that shape passes its checksum anyway.
+const CHANCE = { Luhn: '1 in 10', 'mod-97': '1 in 97', elfproef: '1 in 11' };
 
 export default function Fpe() {
   const r = useResource('fpe', '/api/fpe');
@@ -71,7 +73,7 @@ export default function Fpe() {
           <div className="chain__head">
             <h3 id="fx-title">Synthetic fixtures</h3>
             <span className="dim">
-              role <Mono>{d.role}</Mono>, all generated: published test card numbers, bank code TEST, the 99999 test block of BSNs
+              role <Mono>{d.role}</Mono>, all generated: published test card numbers, IBANs with bank code TEST, BSNs made to pass the elfproef
             </span>
           </div>
           <div className="rotate__row">
@@ -141,7 +143,9 @@ export default function Fpe() {
                       <td>
                         {s.check ? (
                           s.check.checksum ? (
-                            <StatePill state="ok">{s.check.checksumName} valid</StatePill>
+                            <span title={`By chance: about ${CHANCE[s.check.checksumName]} encoded values passes the ${s.check.checksumName}. FF1 does not recompute check digits.`}>
+                              <StatePill state="ok">{s.check.checksumName} valid by chance</StatePill>
+                            </span>
                           ) : (
                             <StatePill state="warn">{s.check.checksumName} fails</StatePill>
                           )

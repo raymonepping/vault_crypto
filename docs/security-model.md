@@ -84,7 +84,7 @@ makes carries the signed-in person's Vault token.
   the browser. No key material is logged or stored.
 - FF1 only accepts the fixture rows; arbitrary personal data cannot be sent
   through the console. The fixtures are synthetic (published test card numbers,
-  bank code `TEST`, the BSN test block).
+  bank code `TEST`, generated BSNs that pass the elfproef).
 - The ledger plaintext you type is kept in the API's memory to compare after
   decryption; type nothing real.
 

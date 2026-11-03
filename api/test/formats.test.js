@@ -71,6 +71,6 @@ test("fixtures are synthetic and pass their own checksums", () => {
         `${r.id} uses bank code TEST`,
       );
     if (r.kind === "bsn")
-      assert.match(r.value, /^99999\d{4}$/, `${r.id} is in the test block`);
+      assert.match(r.value, /^99999\d{4}$/, `${r.id} is a generated 99999xxxx number`);
   }
 });

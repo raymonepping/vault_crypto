@@ -4,8 +4,7 @@
 // Nothing here belongs to a real person:
 //   card  the card networks' published test numbers (Luhn-valid, never issued)
 //   iban  NL + computed check digits + bank code "TEST" (no Dutch bank uses it)
-//   bsn   numbers from the 99999xxxx block, which the Dutch government
-//         reserves for testing, that pass the elfproef
+//   bsn   generated nine-digit numbers starting 99999 that pass the elfproef
 import { writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import {
@@ -59,7 +58,7 @@ const rows = [
     id: `bsn-${i + 1}`,
     kind: "bsn",
     value,
-    note: "test block 99999xxxx",
+    note: "generated, passes the elfproef",
   })),
 ];
 

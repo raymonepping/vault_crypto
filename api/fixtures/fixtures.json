@@ -72,31 +72,31 @@
       "id": "bsn-1",
       "kind": "bsn",
       "value": "999990007",
-      "note": "test block 99999xxxx"
+      "note": "generated, passes the elfproef"
     },
     {
       "id": "bsn-2",
       "kind": "bsn",
       "value": "999990147",
-      "note": "test block 99999xxxx"
+      "note": "generated, passes the elfproef"
     },
     {
       "id": "bsn-3",
       "kind": "bsn",
       "value": "999990214",
-      "note": "test block 99999xxxx"
+      "note": "generated, passes the elfproef"
     },
     {
       "id": "bsn-4",
       "kind": "bsn",
       "value": "999990287",
-      "note": "test block 99999xxxx"
+      "note": "generated, passes the elfproef"
     },
     {
       "id": "bsn-5",
       "kind": "bsn",
       "value": "999990354",
-      "note": "test block 99999xxxx"
+      "note": "generated, passes the elfproef"
     }
   ]
 }
