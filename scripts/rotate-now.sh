@@ -9,12 +9,16 @@ role=${2:?Usage: rotate-now.sh <seal|app> <role>}
 
 case "$plane" in
 seal) container=vcry-seal-rotator ;;
-app)  container=vcry-rotator ;;
-*) echo "rotate-now: unknown plane '$plane'" >&2; exit 64 ;;
+app) container=vcry-rotator ;;
+*)
+  echo "rotate-now: unknown plane '$plane'" >&2
+  exit 64
+  ;;
 esac
 
 [ "$(vcry_container_state "$container")" = running ] || {
-  echo "rotate-now: $container is not running" >&2; exit 1
+  echo "rotate-now: $container is not running" >&2
+  exit 1
 }
 touch_dir="/run/approle/$role"
 podman exec "$container" sh -c "mkdir -p $touch_dir && touch $touch_dir/rotate-now"

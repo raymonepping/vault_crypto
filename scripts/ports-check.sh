@@ -15,7 +15,10 @@ for name in $names; do
   if [ -n "$holder" ]; then
     case "$holder" in
     vcry-*) printf '  %-22s %-6s in use by %s (this stack)\n' "$name" "$port" "$holder" ;;
-    *) printf '  %-22s %-6s CONFLICT: held by container %s\n' "$name" "$port" "$holder"; conflicts=$((conflicts + 1)) ;;
+    *)
+      printf '  %-22s %-6s CONFLICT: held by container %s\n' "$name" "$port" "$holder"
+      conflicts=$((conflicts + 1))
+      ;;
     esac
   elif lsof -nP -iTCP:"$port" -sTCP:LISTEN >/dev/null 2>&1; then
     proc=$(lsof -nP -iTCP:"$port" -sTCP:LISTEN 2>/dev/null | awk 'NR==2 {print $1" (pid "$2")"}')

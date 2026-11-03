@@ -6,7 +6,10 @@ source "$(dirname -- "$0")/common.sh"
 cd "$VCRY_ROOT"
 
 log() { printf '\033[1m[bootstrap]\033[0m %s\n' "$*"; }
-run() { log "$*"; "$VCRY_ROOT/scripts/$1.sh" "${@:2}"; }
+run() {
+  log "$*"
+  "$VCRY_ROOT/scripts/$1.sh" "${@:2}"
+}
 
 log "Step 1/14: Podman pre-flight"
 run podman-check
@@ -60,4 +63,4 @@ run verify
 
 log "Done. vault_crypto is up. Sign in: make identity-copy-password U=olga, then Sign in at the console."
 log "Browser tests: make e2e-install && make test-ui"
-"$VCRY_ROOT/scripts/app-up.sh" || true   # print the URLs again
+"$VCRY_ROOT/scripts/app-up.sh" || true # print the URLs again

@@ -16,7 +16,10 @@ CA_DIR="$ROOT/.secrets/tls"
 SANS="DNS:vault-s,DNS:vault-1,DNS:vcry-vault-s,DNS:vcry-vault-1,DNS:localhost,IP:127.0.0.1"
 
 status() {
-  [ -f "$TLS_DIR/vault.crt" ] || { echo "vault-tls/vault.crt: missing (run make gen-certs)"; return 1; }
+  [ -f "$TLS_DIR/vault.crt" ] || {
+    echo "vault-tls/vault.crt: missing (run make gen-certs)"
+    return 1
+  }
   openssl x509 -in "$TLS_DIR/vault.crt" -noout -subject -issuer -enddate
   openssl x509 -in "$TLS_DIR/vault.crt" -noout -ext subjectAltName | tail -1 | sed 's/^ */SANs: /'
   if openssl verify -CAfile "$TLS_DIR/ca-chain.pem" "$TLS_DIR/vault.crt" >/dev/null 2>&1; then
@@ -110,7 +113,10 @@ sighup_nodes() {
   done
 }
 
-command -v openssl >/dev/null 2>&1 || { echo "openssl not found on PATH" >&2; exit 127; }
+command -v openssl >/dev/null 2>&1 || {
+  echo "openssl not found on PATH" >&2
+  exit 127
+}
 mkdir -p "$CA_DIR"
 chmod 700 "$ROOT/.secrets" "$CA_DIR"
 
@@ -132,5 +138,8 @@ case "${1:-}" in
     sighup_nodes
   fi
   ;;
-*) echo "Usage: $0 [--reissue | --status]" >&2; exit 64 ;;
+*)
+  echo "Usage: $0 [--reissue | --status]" >&2
+  exit 64
+  ;;
 esac

@@ -38,7 +38,10 @@ planes=${*:-seal app}
 for plane in $planes; do
   case "$plane" in
   seal) deliver vault-s seal seal-rotator "$VCRY_STATE/seal-rotator" ;;
-  app)  deliver vault-1 vault crypto-rotator "$VCRY_STATE/rotator" ;;
-  *) echo "rotator-bootstrap: unknown plane '$plane' (seal|app)" >&2; exit 64 ;;
+  app) deliver vault-1 vault crypto-rotator "$VCRY_STATE/rotator" ;;
+  *)
+    echo "rotator-bootstrap: unknown plane '$plane' (seal|app)" >&2
+    exit 64
+    ;;
   esac
 done

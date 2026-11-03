@@ -66,7 +66,10 @@ log "3. imported as key $new_key ($(jq -r '"\(.data.key_type) \(.data.parameter_
 cert=$(vault read -field=certificate pki-pqc-int/issuer/default)
 issuer=$(vault write -format=json pki-pqc-next/issuers/import/cert pem_bundle="$cert" |
   jq -r --arg k "$new_key" '.data.mapping | to_entries[] | select(.value == $k) | .key')
-[ -n "$issuer" ] || { echo "pki-move: the intermediate's certificate did not map to the imported key" >&2; exit 1; }
+[ -n "$issuer" ] || {
+  echo "pki-move: the intermediate's certificate did not map to the imported key" >&2
+  exit 1
+}
 vault write "pki-pqc-next/issuer/$issuer" issuer_name=pqc-int-moved >/dev/null
 vault write pki-pqc-next/config/issuers default="$issuer" >/dev/null
 log "   issuer $issuer now signs with the moved key"

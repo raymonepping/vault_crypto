@@ -12,5 +12,8 @@ for _ in $(seq 1 60); do
   sleep 3
 done
 [ "$(podman inspect vcry-keycloak --format '{{.State.Health.Status}}' 2>/dev/null)" = healthy ] ||
-  { echo "identity-up: Keycloak did not become healthy (make identity-logs)" >&2; exit 1; }
+  {
+    echo "identity-up: Keycloak did not become healthy (make identity-logs)" >&2
+    exit 1
+  }
 echo "identity-up: OpenLDAP and Keycloak ready (http://localhost:$(vcry_conf VCRY_PORT_KEYCLOAK))"

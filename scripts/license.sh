@@ -24,7 +24,10 @@ status_check() {
 }
 
 case "${1:-}" in
---status) status_check; exit 0 ;;
+--status)
+  status_check
+  exit 0
+  ;;
 esac
 
 mkdir -p "$(dirname "$DEST")"
@@ -46,7 +49,10 @@ if [ -z "$src_file" ]; then
   fi
 fi
 
-[ -n "$src_file" ] && [ -f "$src_file" ] || { echo "license: no licence source found. Set VAULT_LICENSE in .env to the licence string or a path." >&2; exit 1; }
+[ -n "$src_file" ] && [ -f "$src_file" ] || {
+  echo "license: no licence source found. Set VAULT_LICENSE in .env to the licence string or a path." >&2
+  exit 1
+}
 install -m 0600 "$src_file" "$DEST"
 echo "license: installed from $src_file"
 status_check

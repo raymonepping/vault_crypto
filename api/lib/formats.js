@@ -6,8 +6,16 @@
 // pretends a checksum survived.
 
 export const KINDS = {
-  card: { label: "Card number", transformation: "ccn-legacy", shape: /^\d{4}-?\d{4}-?\d{4}-?\d{4}$|^\d{13,19}$/ },
-  iban: { label: "Dutch IBAN", transformation: "iban-ff1", shape: /^NL\d{2}[A-Z]{4}\d{10}$/ },
+  card: {
+    label: "Card number",
+    transformation: "ccn-legacy",
+    shape: /^\d{4}-?\d{4}-?\d{4}-?\d{4}$|^\d{13,19}$/,
+  },
+  iban: {
+    label: "Dutch IBAN",
+    transformation: "iban-ff1",
+    shape: /^NL\d{2}[A-Z]{4}\d{10}$/,
+  },
   bsn: { label: "BSN", transformation: "bsn-ff1", shape: /^\d{9}$/ },
 };
 
@@ -71,5 +79,9 @@ export const CHECK_NAMES = { card: "Luhn", iban: "mod-97", bsn: "elfproef" };
 export function formatCheck(kind, value) {
   const k = KINDS[kind];
   if (!k) throw new Error(`unknown kind: ${kind}`);
-  return { shape: k.shape.test(String(value)), checksum: CHECKS[kind](value), checksumName: CHECK_NAMES[kind] };
+  return {
+    shape: k.shape.test(String(value)),
+    checksum: CHECKS[kind](value),
+    checksumName: CHECK_NAMES[kind],
+  };
 }

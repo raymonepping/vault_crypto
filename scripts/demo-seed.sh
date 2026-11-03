@@ -54,7 +54,13 @@ delete_key() {
 reset_pki_next() {
   local id out
   # Quiet: Vault warns about deleting the default issuer/key, which is the point.
-  del() { out=$(vault delete "$1" 2>&1) || { echo "$out" >&2; return 1; }; log "$2 deleted"; }
+  del() {
+    out=$(vault delete "$1" 2>&1) || {
+      echo "$out" >&2
+      return 1
+    }
+    log "$2 deleted"
+  }
   if vault read pki-pqc-next/roles/service >/dev/null 2>&1; then del pki-pqc-next/roles/service "pki-pqc-next role service"; fi
   for id in $(vault_list_json pki-pqc-next/issuers | jq -r '.[]'); do
     del "pki-pqc-next/issuer/$id" "pki-pqc-next issuer $id"
@@ -73,7 +79,10 @@ case "${1:-}" in
   if [ "${RESET:-}" != yes ]; then
     printf 'This deletes and recreates the two demo Transit keys (every ciphertext and\nsignature made with them becomes undecryptable/unverifiable) and empties\npki-pqc-next. Type RESET: '
     read -r answer
-    [ "$answer" = RESET ] || { echo "Aborted."; exit 1; }
+    [ "$answer" = RESET ] || {
+      echo "Aborted."
+      exit 1
+    }
   fi
   delete_key orders-signing
   delete_key ledger-data
@@ -81,5 +90,8 @@ case "${1:-}" in
   create_keys
   log "reset done: every room is back at its starting state"
   ;;
-*) echo "Usage: $0 [--reset]" >&2; exit 64 ;;
+*)
+  echo "Usage: $0 [--reset]" >&2
+  exit 64
+  ;;
 esac

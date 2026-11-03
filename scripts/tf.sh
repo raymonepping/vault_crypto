@@ -13,11 +13,20 @@ root=${1:?Usage: tf.sh <root> <plan|apply|destroy|output> [args]}
 action=${2:?Usage: tf.sh <root> <plan|apply|destroy|output> [args]}
 shift 2
 dir="$VCRY_ROOT/terraform/$root"
-[ -f "$dir/main.tf" ] || { echo "tf: unknown root '$root'" >&2; exit 64; }
+[ -f "$dir/main.tf" ] || {
+  echo "tf: unknown root '$root'" >&2
+  exit 64
+}
 
 case "$root" in
-vault-seal) vault_node vault-s; vault_root seal ;;
-*) vault_node vault-1; vault_root vault ;;
+vault-seal)
+  vault_node vault-s
+  vault_root seal
+  ;;
+*)
+  vault_node vault-1
+  vault_root vault
+  ;;
 esac
 export VAULT_ADDR VAULT_CACERT VAULT_TOKEN
 
@@ -45,9 +54,12 @@ cd "$dir"
 terraform init -input=false >/dev/null
 
 case "$action" in
-plan)    terraform plan -input=false -detailed-exitcode "$@" ;;
-apply)   terraform apply -input=false -auto-approve "$@" ;;
+plan) terraform plan -input=false -detailed-exitcode "$@" ;;
+apply) terraform apply -input=false -auto-approve "$@" ;;
 destroy) terraform destroy -input=false -auto-approve "$@" ;;
-output)  terraform output "$@" ;;
-*) echo "tf: unknown action '$action'" >&2; exit 64 ;;
+output) terraform output "$@" ;;
+*)
+  echo "tf: unknown action '$action'" >&2
+  exit 64
+  ;;
 esac

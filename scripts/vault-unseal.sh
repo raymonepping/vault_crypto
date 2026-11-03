@@ -13,7 +13,10 @@ INIT_FILE="$VCRY_STATE/seal-init.json"
 }
 
 vault_wait reachable 30
-state=$(vault_json) || { echo "unseal: vault-s unreachable at $VAULT_ADDR" >&2; exit 1; }
+state=$(vault_json) || {
+  echo "unseal: vault-s unreachable at $VAULT_ADDR" >&2
+  exit 1
+}
 
 jq -e '.initialized' <<<"$state" >/dev/null || {
   echo "unseal: vault-s reports uninitialized but saved credentials exist: its volume was lost." >&2

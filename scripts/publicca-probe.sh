@@ -15,7 +15,10 @@ source "$(dirname -- "$0")/common.sh"
 cd "$VCRY_ROOT"
 
 for c in vcry-pebble vcry-challtestsrv; do
-  [ "$(vcry_container_state "$c")" = running ] || { echo "publicca-probe: $c is not running (make publicca-up)" >&2; exit 1; }
+  [ "$(vcry_container_state "$c")" = running ] || {
+    echo "publicca-probe: $c is not running (make publicca-up)" >&2
+    exit 1
+  }
 done
 
 vault_node vault-1
@@ -28,7 +31,10 @@ TMP=$(mktemp -d)
 ROWS=()
 trap 'vault secrets disable "$M" >/dev/null 2>&1 || true; rm -rf "$TMP"' EXIT
 
-row() { ROWS+=("| \`$1\` | $2 |"); printf '  %-64s %s\n' "${1:0:64}" "$2"; }
+row() {
+  ROWS+=("| \`$1\` | $2 |")
+  printf '  %-64s %s\n' "${1:0:64}" "$2"
+}
 api() {
   code=$(curl -s -o "$TMP/b" -w '%{http_code}' --cacert "$VAULT_CACERT" -H "X-Vault-Token: $VAULT_TOKEN" \
     -H 'content-type: application/json' -X "$1" ${3:+--data "$3"} "$VAULT_ADDR/v1/$2")

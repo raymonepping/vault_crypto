@@ -21,7 +21,10 @@ log "waiting for role-id and secret-id in $APPROLE_DIR..."
 n=0
 while [ ! -s "$APPROLE_DIR/role-id" ] || [ ! -s "$APPROLE_DIR/secret-id" ]; do
   n=$((n + 1))
-  [ "$n" -ge 120 ] && { log "timed out waiting for AppRole files — is the rotator healthy? (make agents-status)" >&2; exit 1; }
+  [ "$n" -ge 120 ] && {
+    log "timed out waiting for AppRole files — is the rotator healthy? (make agents-status)" >&2
+    exit 1
+  }
   sleep 1
 done
 
@@ -30,7 +33,10 @@ rm -f "$TOKEN_FILE"
 vault agent -config=/vault/agent/config.hcl &
 AGENT=$!
 trap 'kill -TERM "$AGENT" 2>/dev/null; wait "$AGENT" 2>/dev/null; exit 0' TERM INT
-nap() { sleep "$1" & wait $! || true; }
+nap() {
+  sleep "$1" &
+  wait $! || true
+}
 
 nap "$WATCHDOG_GRACE"
 fails=0

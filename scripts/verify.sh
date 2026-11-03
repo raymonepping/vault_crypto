@@ -9,10 +9,21 @@ set -euo pipefail
 source "$(dirname -- "$0")/common.sh"
 cd "$VCRY_ROOT"
 
-pass=0; fail=0
-ok()    { printf '  \033[32m✓\033[0m %s\n' "$*"; pass=$((pass + 1)); }
-bad()   { printf '  \033[31m✗\033[0m %s\n' "$*"; fail=$((fail + 1)); }
-check() { local msg=$1; shift; if "$@" >/dev/null 2>&1; then ok "$msg"; else bad "$msg"; fi; }
+pass=0
+fail=0
+ok() {
+  printf '  \033[32m✓\033[0m %s\n' "$*"
+  pass=$((pass + 1))
+}
+bad() {
+  printf '  \033[31m✗\033[0m %s\n' "$*"
+  fail=$((fail + 1))
+}
+check() {
+  local msg=$1
+  shift
+  if "$@" >/dev/null 2>&1; then ok "$msg"; else bad "$msg"; fi
+}
 healthy() {
   local i
   for i in 1 2 3 4 5 6 7 8 9 10; do
@@ -145,7 +156,8 @@ olga_token() {
 
 section_rooms() {
   echo "rooms (through the API, as the UI calls it, signed in as olga)"
-  local T; T=$(olga_token)
+  local T
+  T=$(olga_token)
   export AUTHZ="authorization: Bearer $T"
   check "all four rooms available" bash -c "curl -sf '$API/api/capabilities' | jq -e '[.rooms[].available] | all'"
   check "a PQC leaf verifies under Node and OpenSSL" bash -c \
@@ -153,8 +165,10 @@ section_rooms() {
   # Algorithm rotation on a scratch key with the root token, removed afterwards.
   vault_root vault
   vault write -f transit/keys/verify-scratch type=ecdsa-p256 >/dev/null 2>&1 || true
-  local IN; IN=$(printf 'verify' | base64)
-  local s1; s1=$(vault write -field=signature transit/sign/verify-scratch input="$IN" 2>/dev/null || true)
+  local IN
+  IN=$(printf 'verify' | base64)
+  local s1
+  s1=$(vault write -field=signature transit/sign/verify-scratch input="$IN" 2>/dev/null || true)
   check "scratch key: ecdsa-p256 → ml-dsa 65 under the same name" bash -c 'vault write -format=json transit/keys/verify-scratch/algorithm type=ml-dsa parameter_set=65 | jq -e ".data.latest_version_type == \"ml-dsa\""'
   check "scratch key: the v1 signature still verifies after the change" bash -c "vault write -field=valid transit/verify/verify-scratch input='$IN' signature='$s1' | grep -q true"
   vault write transit/keys/verify-scratch/config deletion_allowed=true >/dev/null 2>&1 || true
@@ -169,5 +183,8 @@ for s in $sections; do
   "section_$s"
 done
 printf '\n%d passed, %d failed\n' "$pass" "$fail"
-[ "$fail" -eq 0 ] || { echo "Run make doctor for the fix."; exit 1; }
+[ "$fail" -eq 0 ] || {
+  echo "Run make doctor for the fix."
+  exit 1
+}
 echo "Browser journeys: make test-ui"

@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { Aborted, call, subscribeLog } from './api.js';
-import { createLatest } from './latest.js';
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Aborted, call, subscribeLog } from "./api.js";
+import { createLatest } from "./latest.js";
 
 // GET a resource; reload() re-reads it. Errors keep Vault's text.
 //
@@ -8,18 +8,28 @@ import { createLatest } from './latest.js';
 // read is aborted, polls are scheduled after the previous one finished (they
 // never pile up), and a hidden tab stops polling and refreshes when it is
 // shown again.
-export function useResource(label, path, { quiet = true, intervalMs = 0 } = {}) {
-  const [state, setState] = useState({ data: null, error: null, loading: true });
+export function useResource(
+  label,
+  path,
+  { quiet = true, intervalMs = 0 } = {},
+) {
+  const [state, setState] = useState({
+    data: null,
+    error: null,
+    loading: true,
+  });
   const latest = useRef(null);
   if (!latest.current) latest.current = createLatest();
   const load = useCallback(async () => {
     const { id, signal } = latest.current.begin();
     try {
       const data = await call(label, path, { quiet, signal });
-      if (latest.current.isCurrent(id)) setState({ data, error: null, loading: false });
+      if (latest.current.isCurrent(id))
+        setState({ data, error: null, loading: false });
       return data;
     } catch (error) {
-      if (error instanceof Aborted || !latest.current.isCurrent(id)) return null;
+      if (error instanceof Aborted || !latest.current.isCurrent(id))
+        return null;
       setState((s) => ({ data: s.data, error, loading: false }));
       return null;
     }
@@ -42,11 +52,11 @@ export function useResource(label, path, { quiet = true, intervalMs = 0 } = {}) 
       }
     };
     load().then(schedule);
-    document.addEventListener('visibilitychange', onVisible);
+    document.addEventListener("visibilitychange", onVisible);
     return () => {
       stopped = true;
       clearTimeout(timer);
-      document.removeEventListener('visibilitychange', onVisible);
+      document.removeEventListener("visibilitychange", onVisible);
       latest.current.abort();
     };
   }, [load, intervalMs]);
@@ -55,7 +65,11 @@ export function useResource(label, path, { quiet = true, intervalMs = 0 } = {}) 
 
 // An action button's lifecycle: busy while running, last result or error.
 export function useAction(fn) {
-  const [state, setState] = useState({ busy: false, result: null, error: null });
+  const [state, setState] = useState({
+    busy: false,
+    result: null,
+    error: null,
+  });
   const run = useCallback(
     async (...args) => {
       setState((s) => ({ ...s, busy: true, error: null }));
@@ -70,7 +84,10 @@ export function useAction(fn) {
     },
     [fn],
   );
-  const clear = useCallback(() => setState({ busy: false, result: null, error: null }), []);
+  const clear = useCallback(
+    () => setState({ busy: false, result: null, error: null }),
+    [],
+  );
   return { ...state, run, clear };
 }
 
@@ -83,14 +100,14 @@ export function useVaultLog() {
 // Hash routing: #/pki, #/agility …
 export function useRoute(routes, fallback) {
   const read = () => {
-    const r = window.location.hash.replace(/^#\/?/, '').split('?')[0];
+    const r = window.location.hash.replace(/^#\/?/, "").split("?")[0];
     return routes.includes(r) ? r : fallback;
   };
   const [route, setRoute] = useState(read);
   useEffect(() => {
     const on = () => setRoute(read());
-    window.addEventListener('hashchange', on);
-    return () => window.removeEventListener('hashchange', on);
+    window.addEventListener("hashchange", on);
+    return () => window.removeEventListener("hashchange", on);
   });
   return route;
 }

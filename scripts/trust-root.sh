@@ -7,13 +7,19 @@ set -euo pipefail
 # shellcheck source=scripts/common.sh
 source "$(dirname -- "$0")/common.sh"
 
-[ "$(uname -s)" = Darwin ] || { echo "trust-root: macOS only; import pki-classic-root by hand on this OS" >&2; exit 1; }
+[ "$(uname -s)" = Darwin ] || {
+  echo "trust-root: macOS only; import pki-classic-root by hand on this OS" >&2
+  exit 1
+}
 KEYCHAIN=/Library/Keychains/System.keychain
 vault_node vault-1
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 curl -sf --cacert "$VAULT_CACERT" "$VAULT_ADDR/v1/pki-classic-root/ca/pem" >"$tmp/root.pem" ||
-  { echo "trust-root: cannot read pki-classic-root from vault-1 (make vault-up)" >&2; exit 1; }
+  {
+    echo "trust-root: cannot read pki-classic-root from vault-1 (make vault-up)" >&2
+    exit 1
+  }
 sha1=$(openssl x509 -in "$tmp/root.pem" -noout -fingerprint -sha1 | cut -d= -f2 | tr -d :)
 
 case "${1:-}" in
@@ -34,5 +40,8 @@ remove)
     echo "trust-root: this pki-classic-root is not in the System keychain"
   fi
   ;;
-*) echo "Usage: $0 add|remove" >&2; exit 64 ;;
+*)
+  echo "Usage: $0 add|remove" >&2
+  exit 64
+  ;;
 esac

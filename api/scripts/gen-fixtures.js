@@ -8,7 +8,12 @@
 //         reserves for testing, that pass the elfproef
 import { writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { luhn, ibanCheckDigits, ibanMod97, bsnElfproef } from "../lib/formats.js";
+import {
+  luhn,
+  ibanCheckDigits,
+  ibanMod97,
+  bsnElfproef,
+} from "../lib/formats.js";
 
 const cards = [
   ["Visa test", "4111-1111-1111-1111"],
@@ -38,16 +43,44 @@ for (let n = 99999000; bsns.length < 5 && n < 99999999; n += 7) {
 }
 
 const rows = [
-  ...cards.map(([note, value], i) => ({ id: `card-${i + 1}`, kind: "card", value, note })),
-  ...ibans.map((value, i) => ({ id: `iban-${i + 1}`, kind: "iban", value, note: "synthetic, bank code TEST" })),
-  ...bsns.map((value, i) => ({ id: `bsn-${i + 1}`, kind: "bsn", value, note: "test block 99999xxxx" })),
+  ...cards.map(([note, value], i) => ({
+    id: `card-${i + 1}`,
+    kind: "card",
+    value,
+    note,
+  })),
+  ...ibans.map((value, i) => ({
+    id: `iban-${i + 1}`,
+    kind: "iban",
+    value,
+    note: "synthetic, bank code TEST",
+  })),
+  ...bsns.map((value, i) => ({
+    id: `bsn-${i + 1}`,
+    kind: "bsn",
+    value,
+    note: "test block 99999xxxx",
+  })),
 ];
 
 for (const r of rows) {
-  const ok = r.kind === "card" ? luhn(r.value) : r.kind === "iban" ? ibanMod97(r.value) : bsnElfproef(r.value);
-  if (!ok) throw new Error(`fixture ${r.id} fails its own checksum: ${r.value}`);
+  const ok =
+    r.kind === "card"
+      ? luhn(r.value)
+      : r.kind === "iban"
+        ? ibanMod97(r.value)
+        : bsnElfproef(r.value);
+  if (!ok)
+    throw new Error(`fixture ${r.id} fails its own checksum: ${r.value}`);
 }
 
-const out = fileURLToPath(new URL("../fixtures/fixtures.json", import.meta.url));
-writeFileSync(out, `${JSON.stringify({ synthetic: true, generatedBy: "api/scripts/gen-fixtures.js", rows }, null, 2)}\n`);
-console.log(`gen-fixtures: ${rows.length} synthetic rows → fixtures/fixtures.json`);
+const out = fileURLToPath(
+  new URL("../fixtures/fixtures.json", import.meta.url),
+);
+writeFileSync(
+  out,
+  `${JSON.stringify({ synthetic: true, generatedBy: "api/scripts/gen-fixtures.js", rows }, null, 2)}\n`,
+);
+console.log(
+  `gen-fixtures: ${rows.length} synthetic rows → fixtures/fixtures.json`,
+);

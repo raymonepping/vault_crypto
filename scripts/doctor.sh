@@ -7,13 +7,17 @@ cd "$VCRY_ROOT"
 
 problems=0
 good() { printf '  \033[32m✓\033[0m %s\n' "$*"; }
-fix()  { printf '  \033[31m✗\033[0m %s\n      fix: %s\n' "$1" "$2"; problems=$((problems + 1)); }
+fix() {
+  printf '  \033[31m✗\033[0m %s\n      fix: %s\n' "$1" "$2"
+  problems=$((problems + 1))
+}
 
 echo "host"
 if [ "$(uname -s)" = Darwin ]; then
   vm=$(podman machine ssh date +%s 2>/dev/null | tr -d '\r' | tail -1 || true)
   if [ -n "$vm" ]; then
-    skew=$(($(date +%s) - vm)); skew=${skew#-}
+    skew=$(($(date +%s) - vm))
+    skew=${skew#-}
     if [ "$skew" -gt 30 ]; then fix "VM clock is ${skew}s off the host" "make clock-sync"; else good "VM clock skew ${skew}s"; fi
   else
     fix "cannot reach the Podman machine" "podman machine start"
@@ -47,7 +51,10 @@ for node in vault-s vault-1; do
   file="$VCRY_STATE/$cluster-init.json"
   [ "$(vcry_container_state "$(vault_container "$node")")" = running ] || continue
   vault_node "$node"
-  if ! s=$(vault_json 2>/dev/null); then fix "$node does not answer" "make vault-up"; continue; fi
+  if ! s=$(vault_json 2>/dev/null); then
+    fix "$node does not answer" "make vault-up"
+    continue
+  fi
   init=$(jq -r .initialized <<<"$s")
   if [ "$init" = true ] && [ ! -s "$file" ]; then
     fix "$node is initialized but .secrets/vault/$cluster-init.json is missing" "restore it from backups/*/secrets.tar"
@@ -136,4 +143,7 @@ echo "ports"
 if "$VCRY_ROOT/scripts/ports-check.sh" >/dev/null 2>&1; then good "no port conflicts"; else fix "a port this stack needs is taken" "make ports-check, then override it in .env"; fi
 
 echo
-if [ "$problems" -eq 0 ]; then echo "doctor: nothing wrong found"; else echo "doctor: $problems problem(s)"; exit 1; fi
+if [ "$problems" -eq 0 ]; then echo "doctor: nothing wrong found"; else
+  echo "doctor: $problems problem(s)"
+  exit 1
+fi

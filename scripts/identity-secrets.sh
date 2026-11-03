@@ -25,7 +25,11 @@ export VAULT_ADDR VAULT_TOKEN VAULT_CACERT
 gen() { openssl rand -base64 33 | tr -d '/+=\n' | cut -c1-28; }
 exists() { vault kv get -mount=kv "vcry/identity/$1" >/dev/null 2>&1; }
 put() { vault kv put -mount=kv "vcry/identity/$1" value="$2" >/dev/null; }
-user_ok() { case " $PERSONAS " in *" $1 "*) return 0 ;; esac; echo "identity-secrets: unknown persona '$1' (one of: $PERSONAS)" >&2; exit 64; }
+user_ok() {
+  case " $PERSONAS " in *" $1 "*) return 0 ;; esac
+  echo "identity-secrets: unknown persona '$1' (one of: $PERSONAS)" >&2
+  exit 64
+}
 
 case "${1:-}" in
 --rotate-user)
@@ -46,15 +50,24 @@ case "${1:-}" in
   exit 0
   ;;
 "") ;;
-*) echo "Usage: $0 [--rotate-user U | --copy U | --print U]" >&2; exit 64 ;;
+*)
+  echo "Usage: $0 [--rotate-user U | --copy U | --print U]" >&2
+  exit 64
+  ;;
 esac
 
 created=0
 for key in ldap-admin-password keycloak-admin-password console-client-secret; do
-  exists "$key" || { put "$key" "$(gen)"; created=$((created + 1)); }
+  exists "$key" || {
+    put "$key" "$(gen)"
+    created=$((created + 1))
+  }
 done
 for u in $PERSONAS; do
-  exists "users/$u" || { put "users/$u" "$(gen)"; created=$((created + 1)); }
+  exists "users/$u" || {
+    put "users/$u" "$(gen)"
+    created=$((created + 1))
+  }
 done
 echo "identity-secrets: $created secret(s) created in kv/vcry/identity (existing ones kept)"
 

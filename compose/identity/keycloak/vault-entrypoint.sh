@@ -11,7 +11,10 @@ password_file="${IDENTITY_SECRETS_DIR:-/run/secrets}/keycloak-admin-password"
 attempt=0
 until [ -s "$password_file" ]; do
   attempt=$((attempt + 1))
-  [ "$attempt" -ge 30 ] && { echo "[vault-entrypoint] $password_file never appeared" >&2; exit 1; }
+  [ "$attempt" -ge 30 ] && {
+    echo "[vault-entrypoint] $password_file never appeared" >&2
+    exit 1
+  }
   sleep 2
 done
 

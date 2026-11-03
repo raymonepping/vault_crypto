@@ -23,7 +23,10 @@ vault_cluster_of() {
   case "$1" in
   vault-s) echo seal ;;
   vault-1) echo vault ;;
-  *) echo "Unknown Vault node: $1" >&2; return 1 ;;
+  *)
+    echo "Unknown Vault node: $1" >&2
+    return 1
+    ;;
   esac
 }
 
@@ -35,7 +38,10 @@ vault_node() {
   case "$1" in
   vault-s) port=$(vcry_conf VCRY_PORT_VAULT_S) ;;
   vault-1) port=$(vcry_conf VCRY_PORT_VAULT_1) ;;
-  *) echo "Unknown Vault node: $1" >&2; return 1 ;;
+  *)
+    echo "Unknown Vault node: $1" >&2
+    return 1
+    ;;
   esac
   VAULT_ADDR="https://127.0.0.1:$port"
   export VAULT_ADDR

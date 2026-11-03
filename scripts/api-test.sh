@@ -10,7 +10,8 @@ set -euo pipefail
 source "$(dirname -- "$0")/common.sh"
 
 A="http://127.0.0.1:$(vcry_conf VCRY_PORT_API)"
-pass=0; fail=0
+pass=0
+fail=0
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
 
@@ -22,7 +23,10 @@ kc_token() {
     jq -r '.access_token // empty'
 }
 BEARER=$(kc_token olga)
-[ -n "$BEARER" ] || { echo "api-test: Keycloak gave no token for olga (make identity-up && make identity-verify)" >&2; exit 1; }
+[ -n "$BEARER" ] || {
+  echo "api-test: Keycloak gave no token for olga (make identity-up && make identity-verify)" >&2
+  exit 1
+}
 
 # call <expected status> <method> <path> [json] → body in $TMP/b (as $BEARER)
 call() {
@@ -33,14 +37,20 @@ call() {
   else
     code=$(curl -s -o "$TMP/b" -w '%{http_code}' -X "$method" "${auth[@]}" "$A$path")
   fi
-  [ "$code" = "$want" ] || { printf '  \033[31m✗\033[0m %s %s: HTTP %s, want %s: %s\n' "$method" "$path" "$code" "$want" "$(head -c 300 "$TMP/b")"; fail=$((fail + 1)); return 1; }
+  [ "$code" = "$want" ] || {
+    printf '  \033[31m✗\033[0m %s %s: HTTP %s, want %s: %s\n' "$method" "$path" "$code" "$want" "$(head -c 300 "$TMP/b")"
+    fail=$((fail + 1))
+    return 1
+  }
 }
 # expect <description> <jq filter that must be true>
 expect() {
   if jq -e "$2" "$TMP/b" >/dev/null 2>&1; then
-    printf '  \033[32m✓\033[0m %s\n' "$1"; pass=$((pass + 1))
+    printf '  \033[32m✓\033[0m %s\n' "$1"
+    pass=$((pass + 1))
   else
-    printf '  \033[31m✗\033[0m %s: %s\n' "$1" "$(head -c 300 "$TMP/b")"; fail=$((fail + 1))
+    printf '  \033[31m✗\033[0m %s: %s\n' "$1" "$(head -c 300 "$TMP/b")"
+    fail=$((fail + 1))
   fi
 }
 j() { jq -r "$1" "$TMP/b"; }
@@ -55,11 +65,19 @@ call 200 GET /api/pki/chains && expect "chains: classic EC, post-quantum ML-DSA,
   '(.chains.classic.intermediate.certificate.key.family == "classic") and (.chains.pqc.root.certificate.signatureAlgorithm.name == "ML-DSA-87") and (.chains.pqc.intermediate.certificate.key.type == "ml-dsa-65") and (.chains.pqc.crl.ocspDisabled) and (.chains.classic.crl.ocspDisabled|not)'
 call 200 POST /api/pki/issue '{"chain":"classic","cn":"api-test.lab.local"}' && expect "issue classic: verified by node and openssl, no private key" \
   '.verification.node.ok and .verification.openssl.ok and (.leaf.key.label == "EC P-256") and (has("private_key")|not) and (.certificate|test("PRIVATE")|not)'
-classic_serial=$(j .leaf.serial); classic_bytes=$(j .leaf.bytes.der)
+classic_serial=$(j .leaf.serial)
+classic_bytes=$(j .leaf.bytes.der)
 call 200 POST /api/pki/issue '{"chain":"pqc","cn":"api-test.lab.local"}' && expect "issue pqc: ML-DSA-44 leaf signed by ML-DSA-65, verified twice" \
   '.verification.node.ok and .verification.openssl.ok and (.leaf.key.type == "ml-dsa-44") and (.leaf.signatureAlgorithm.name == "ML-DSA-65") and (.leaf.bytes.signature == 3309)'
-pqc_serial=$(j .leaf.serial); pqc_bytes=$(j .leaf.bytes.der)
-[ "$pqc_bytes" -gt "$classic_bytes" ] && { printf '  \033[32m✓\033[0m the ML-DSA leaf is larger (%s vs %s bytes DER)\n' "$pqc_bytes" "$classic_bytes"; pass=$((pass + 1)); } || { echo "  ✗ sizes"; fail=$((fail + 1)); }
+pqc_serial=$(j .leaf.serial)
+pqc_bytes=$(j .leaf.bytes.der)
+[ "$pqc_bytes" -gt "$classic_bytes" ] && {
+  printf '  \033[32m✓\033[0m the ML-DSA leaf is larger (%s vs %s bytes DER)\n' "$pqc_bytes" "$classic_bytes"
+  pass=$((pass + 1))
+} || {
+  echo "  ✗ sizes"
+  fail=$((fail + 1))
+}
 call 400 POST /api/pki/issue '{"chain":"classic","cn":"evil.example.com"}' && expect "issue refuses names outside lab.local" '.ok == false'
 call 200 GET "/api/pki/ocsp?chain=classic&serial=$classic_serial" && expect "OCSP classic: good, signature verified" '.status == "good" and .signatureVerified'
 call 200 GET "/api/pki/ocsp?chain=pqc&serial=$pqc_serial" && expect "OCSP pqc: Vault's refusal returned as is" '.status == "responder-error" and (.responderError | length > 0)'

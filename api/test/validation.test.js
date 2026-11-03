@@ -22,9 +22,17 @@ test("serial and free text", () => {
 });
 
 test("rotation targets become Vault's algorithm payloads", () => {
-  assert.deepEqual(targetParam("ml-dsa-65").body, { type: "ml-dsa", parameter_set: "65" });
+  assert.deepEqual(targetParam("ml-dsa-65").body, {
+    type: "ml-dsa",
+    parameter_set: "65",
+  });
   assert.deepEqual(targetParam("aes256-gcm96").body, { type: "aes256-gcm96" });
-  assert.deepEqual(targetParam("hybrid-ml-dsa-65-ecdsa-p256").body, { type: "hybrid", parameter_set: "65", hybrid_key_type_pqc: "ml-dsa", hybrid_key_type_ec: "ecdsa-p256" });
+  assert.deepEqual(targetParam("hybrid-ml-dsa-65-ecdsa-p256").body, {
+    type: "hybrid",
+    parameter_set: "65",
+    hybrid_key_type_pqc: "ml-dsa",
+    hybrid_key_type_ec: "ecdsa-p256",
+  });
   assert.throws(() => targetParam("rsa-1024"), /target must be one of/);
   assert.throws(() => keyParam("transit-root"), /key must be one of/);
   assert.equal(family("hybrid"), "post-quantum");
@@ -43,7 +51,16 @@ test("mount and chain allow-lists", () => {
 test("FPE only takes fixture rows, before any call to Vault", async () => {
   await assert.rejects(fpe.encode([]), /non-empty/);
   await assert.rejects(fpe.encode([{ id: "someone-real" }]), /unknown fixture/);
-  await assert.rejects(fpe.decode([{ id: "card-1", value: "<script>" }]), /not an encoded/);
-  await assert.rejects(fpe.encode(Array.from({ length: 51 }, () => ({ id: "card-1" }))), /at most 50/);
-  assert.equal(fpe.fixtures().every((r) => r.check.checksum), true);
+  await assert.rejects(
+    fpe.decode([{ id: "card-1", value: "<script>" }]),
+    /not an encoded/,
+  );
+  await assert.rejects(
+    fpe.encode(Array.from({ length: 51 }, () => ({ id: "card-1" }))),
+    /at most 50/,
+  );
+  assert.equal(
+    fpe.fixtures().every((r) => r.check.checksum),
+    true,
+  );
 });

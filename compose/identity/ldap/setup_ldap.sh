@@ -72,7 +72,7 @@ for file in "$SECRETS"/users/*; do
   uid="$(basename "$file")"
   dn="uid=${uid},ou=people,${BASE_DN}"
   if ldappasswd -x -H "ldap://${LDAP_HOST}" -D "$BIND_DN" -w "$LDAP_ADMIN_PASSWORD" \
-       -s "$(cat "$file")" "$dn" >/dev/null 2>&1; then
+    -s "$(cat "$file")" "$dn" >/dev/null 2>&1; then
     echo "  * password set from Vault: $uid"
     pw_set=$((pw_set + 1))
   else

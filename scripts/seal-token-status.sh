@@ -5,7 +5,10 @@ set -uo pipefail
 source "$(dirname -- "$0")/common.sh"
 set +e
 
-[ "$(vcry_container_state vcry-vault-1)" = running ] || { echo "vault-1: not running"; exit 1; }
+[ "$(vcry_container_state vcry-vault-1)" = running ] || {
+  echo "vault-1: not running"
+  exit 1
+}
 
 h() { tr -d '\r\n' | shasum -a 256 | cut -c1-16; }
 held_src='tr "\0" "\n" </proc/1/environ | sed -n "s/^VAULT_TOKEN=//p"'

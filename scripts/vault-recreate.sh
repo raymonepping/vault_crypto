@@ -6,7 +6,8 @@ set -euo pipefail
 source "$(dirname -- "$0")/common.sh"
 
 [ "$(vcry_container_state vcry-vault-1)" = running ] || {
-  echo "vault-recreate: vault-1 is not running" >&2; exit 1
+  echo "vault-recreate: vault-1 is not running" >&2
+  exit 1
 }
 "$VCRY_ROOT/scripts/compose.sh" vault up -d --force-recreate vault-1
 vault_node vault-1

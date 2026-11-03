@@ -46,7 +46,10 @@ rotate() {
 
   role_id=$(VAULT_TOKEN="$token" vault read -field=role_id "auth/approle/role/$role/role-id")
   new=$(VAULT_TOKEN="$token" vault write -field=secret_id -f "auth/approle/role/$role/secret-id")
-  [ -n "$new" ] && [ "$new" != null ] || { log "ERROR: no secret-id returned for $role"; return 1; }
+  [ -n "$new" ] && [ "$new" != null ] || {
+    log "ERROR: no secret-id returned for $role"
+    return 1
+  }
   acc=$(lookup_field "$token" "$role" "$new" secret_id_accessor || echo unknown)
   exp=$(lookup_field "$token" "$role" "$new" expiration_time || echo "")
 
@@ -72,15 +75,29 @@ rotate() {
 
 needs_rotation() {
   token=$1 role=$2 dir="/run/approle/$2"
-  [ -s "$dir/secret-id" ] && [ -s "$dir/role-id" ] && [ -s "$dir/metadata.json" ] || { log "$role: no secret-id on disk — issuing"; return 0; }
-  [ -e "$dir/rotate-now" ] && { rm -f "$dir/rotate-now"; log "$role: rotation requested"; return 0; }
+  [ -s "$dir/secret-id" ] && [ -s "$dir/role-id" ] && [ -s "$dir/metadata.json" ] || {
+    log "$role: no secret-id on disk — issuing"
+    return 0
+  }
+  [ -e "$dir/rotate-now" ] && {
+    rm -f "$dir/rotate-now"
+    log "$role: rotation requested"
+    return 0
+  }
   cur=$(cat "$dir/secret-id")
   exp=$(lookup_field "$token" "$role" "$cur" expiration_time || echo "")
   cre=$(lookup_field "$token" "$role" "$cur" creation_time || echo "")
-  [ -n "$exp" ] || { log "$role: Vault does not recognise the current secret-id — rotating"; return 0; }
+  [ -n "$exp" ] || {
+    log "$role: Vault does not recognise the current secret-id — rotating"
+    return 0
+  }
   [ "$exp" = "0001-01-01T00:00:00Z" ] && return 1
-  now=$(date +%s); e=$(to_epoch "$exp"); c=$(to_epoch "$cre")
-  left=$((e - now)); life=$((e - c)); [ "$life" -gt 0 ] || life=$WARN_IF_SHORTER_THAN
+  now=$(date +%s)
+  e=$(to_epoch "$exp")
+  c=$(to_epoch "$cre")
+  left=$((e - now))
+  life=$((e - c))
+  [ "$life" -gt 0 ] || life=$WARN_IF_SHORTER_THAN
   if [ "$left" -lt $((life / ROTATE_BELOW_FRACTION)) ]; then
     log "$role: $((left / 3600)) h left of a $((life / 86400))-day life — rotating"
     return 0
@@ -89,7 +106,10 @@ needs_rotation() {
 }
 
 pass() {
-  token=$(get_token) || { log "WARNING: rotator login failed"; return 1; }
+  token=$(get_token) || {
+    log "WARNING: rotator login failed"
+    return 1
+  }
   rc=0
   for role in $TARGET_ROLES; do
     mkdir -p "/run/approle/$role"
@@ -107,10 +127,14 @@ until vault status >/dev/null 2>&1; do
 done
 
 while true; do
-  if pass; then nap=$CHECK_INTERVAL_SECONDS; else log "pass failed; retrying in 30s"; nap=30; fi
+  if pass; then nap=$CHECK_INTERVAL_SECONDS; else
+    log "pass failed; retrying in 30s"
+    nap=30
+  fi
   waited=0
   while [ "$waited" -lt "$nap" ]; do
-    sleep 5; waited=$((waited + 5))
+    sleep 5
+    waited=$((waited + 5))
     for role in $TARGET_ROLES; do [ -e "/run/approle/$role/rotate-now" ] && waited=$nap; done
   done
 done

@@ -18,7 +18,10 @@ while read -r plane rot role agent; do
   meta=$(podman exec "$rot" cat "/run/approle/$role/metadata.json" 2>/dev/null || echo '{}')
   as=$(state "$agent")
   ttl=$(podman exec "$agent" sh -c 'VAULT_TOKEN=$(cat "$TOKEN_FILE" 2>/dev/null) vault token lookup -format=json 2>/dev/null' 2>/dev/null | jq -r '.data.ttl // empty' 2>/dev/null)
-  if [ -n "$ttl" ]; then ttl="$((ttl / 60))m"; else ttl=REJECTED; failed=1; fi
+  if [ -n "$ttl" ]; then ttl="$((ttl / 60))m"; else
+    ttl=REJECTED
+    failed=1
+  fi
   { [ "$rs" = healthy ] && [ "$login" = ok ]; } || failed=1
   printf '%-5s %-20s %-10s %-10s %-20s %-21s %-10s %s\n' "$plane" "$role" "$rs" "$login" \
     "$(jq -r '.expiration_time // "-"' <<<"$meta" | cut -c1-19)" "$(jq -r '.last_rotation_utc // "-"' <<<"$meta")" "$as" "$ttl"

@@ -21,7 +21,10 @@ if [ -z "$answer" ]; then
   printf 'Type DELETE to continue: '
   read -r answer
 fi
-[ "$answer" = DELETE ] || { echo "clean-slate: aborted, nothing changed."; exit 1; }
+[ "$answer" = DELETE ] || {
+  echo "clean-slate: aborted, nothing changed."
+  exit 1
+}
 
 if [ "${SKIP_BACKUP:-0}" != 1 ] && [ "$(vcry_container_state vcry-vault-1)" = running ] && [ -s "$VCRY_STATE/vault-init.json" ]; then
   "$VCRY_ROOT/scripts/backup.sh" || {

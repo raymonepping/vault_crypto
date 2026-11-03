@@ -8,13 +8,23 @@ source "$(dirname -- "$0")/common.sh"
 set +e
 cd "$VCRY_ROOT"
 pass=0 fail=0
-ok()  { printf '  \033[32mok\033[0m    %s\n' "$*"; pass=$((pass + 1)); }
-bad() { printf '  \033[31mFAIL\033[0m  %s\n' "$*"; fail=$((fail + 1)); }
+ok() {
+  printf '  \033[32mok\033[0m    %s\n' "$*"
+  pass=$((pass + 1))
+}
+bad() {
+  printf '  \033[31mFAIL\033[0m  %s\n' "$*"
+  fail=$((fail + 1))
+}
 wait_for() {
   local max=$1 d=$2 t=0
   shift 2
   until "$@" >/dev/null 2>&1; do
-    t=$((t + 5)); [ "$t" -ge "$max" ] && { bad "$d (not within ${max}s)"; return 1; }
+    t=$((t + 5))
+    [ "$t" -ge "$max" ] && {
+      bad "$d (not within ${max}s)"
+      return 1
+    }
     sleep 5
   done
   ok "$d (${t}s)"
@@ -24,13 +34,13 @@ ROLE=cryptolab-api
 META=/run/approle/$ROLE/metadata.json
 api="http://127.0.0.1:$(vcry_conf VCRY_PORT_API)"
 agent_token_ok() { podman exec vcry-vault-agent sh -c 'VAULT_TOKEN=$(cat "$TOKEN_FILE" 2>/dev/null) vault token lookup >/dev/null 2>&1'; }
-agent_accessor()  { podman exec vcry-vault-agent sh -c 'VAULT_TOKEN=$(cat "$TOKEN_FILE") vault token lookup -format=json' | jq -r .data.accessor; }
+agent_accessor() { podman exec vcry-vault-agent sh -c 'VAULT_TOKEN=$(cat "$TOKEN_FILE") vault token lookup -format=json' | jq -r .data.accessor; }
 secret_accessor() { podman exec vcry-rotator cat "$META" | jq -r .secret_id_accessor; }
-restarts()        { podman inspect vcry-vault-agent --format '{{.RestartCount}}'; }
+restarts() { podman inspect vcry-vault-agent --format '{{.RestartCount}}'; }
 # /api/health only checks the token file exists; a real Vault call with the
 # API's own token proves it works (/api/capabilities reads three paths).
-api_works()       { curl -sf "$api/api/capabilities" | jq -e '.rooms.pki.config.ok and .rooms.fpe.config.ok' >/dev/null 2>&1; }
-accessor_dead()   { ! vault write auth/approle/role/$ROLE/secret-id-accessor/lookup secret_id_accessor="$1" >/dev/null 2>&1; }
+api_works() { curl -sf "$api/api/capabilities" | jq -e '.rooms.pki.config.ok and .rooms.fpe.config.ok' >/dev/null 2>&1; }
+accessor_dead() { ! vault write auth/approle/role/$ROLE/secret-id-accessor/lookup secret_id_accessor="$1" >/dev/null 2>&1; }
 
 vault_node vault-1
 vault_root vault
@@ -85,9 +95,9 @@ unset VAULT_TOKEN
 
 echo
 echo "5. tls-agent's token is revoked (the web certificate keeps being served)"
-tls_ok()  { podman exec vcry-tls-agent sh -c 'VAULT_TOKEN=$(cat "$TOKEN_FILE" 2>/dev/null) vault token lookup >/dev/null 2>&1'; }
+tls_ok() { podman exec vcry-tls-agent sh -c 'VAULT_TOKEN=$(cat "$TOKEN_FILE" 2>/dev/null) vault token lookup >/dev/null 2>&1'; }
 tls_acc() { podman exec vcry-tls-agent sh -c 'VAULT_TOKEN=$(cat "$TOKEN_FILE") vault token lookup -format=json' | jq -r .data.accessor; }
-web_up()  { "$VCRY_ROOT/scripts/web-cert.sh" >/dev/null 2>&1; }
+web_up() { "$VCRY_ROOT/scripts/web-cert.sh" >/dev/null 2>&1; }
 vault_node vault-1
 vault_root vault
 acc=$(tls_acc)

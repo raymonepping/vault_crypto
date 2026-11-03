@@ -19,7 +19,10 @@ export function subscribeLog(fn) {
 }
 
 function record(entry) {
-  log = [{ id: ++seq, at: new Date().toISOString(), ...entry }, ...log].slice(0, 30);
+  log = [{ id: ++seq, at: new Date().toISOString(), ...entry }, ...log].slice(
+    0,
+    30,
+  );
   listeners.forEach((fn) => fn(log));
 }
 
@@ -28,13 +31,17 @@ function record(entry) {
 export class Aborted extends Error {}
 
 // call(label, path, { method, body, quiet, signal }) → parsed JSON, or ApiError.
-export async function call(label, path, { method = 'GET', body, quiet = false, signal } = {}) {
+export async function call(
+  label,
+  path,
+  { method = "GET", body, quiet = false, signal } = {},
+) {
   let status = 0;
   let json = null;
   try {
     const r = await fetch(path, {
       method,
-      headers: body === undefined ? {} : { 'content-type': 'application/json' },
+      headers: body === undefined ? {} : { "content-type": "application/json" },
       body: body === undefined ? undefined : JSON.stringify(body),
       signal,
     });
@@ -49,8 +56,17 @@ export async function call(label, path, { method = 'GET', body, quiet = false, s
     return json;
   } catch (e) {
     if (e instanceof ApiError) throw e;
-    if (signal?.aborted) throw new Aborted('cancelled');
-    if (!quiet) record({ label, method, path, status, body: { error: String(e.message || e) } });
-    throw new ApiError(status, { error: `The API did not answer: ${e.message || e}` });
+    if (signal?.aborted) throw new Aborted("cancelled");
+    if (!quiet)
+      record({
+        label,
+        method,
+        path,
+        status,
+        body: { error: String(e.message || e) },
+      });
+    throw new ApiError(status, {
+      error: `The API did not answer: ${e.message || e}`,
+    });
   }
 }

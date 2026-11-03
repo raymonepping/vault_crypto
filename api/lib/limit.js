@@ -8,7 +8,8 @@
 import { VaultError } from "./vault.js";
 
 export function createLimiter(max, { queueMax = 1000, name = "limit" } = {}) {
-  if (!Number.isInteger(max) || max < 1) throw new Error(`${name}: max must be a positive integer`);
+  if (!Number.isInteger(max) || max < 1)
+    throw new Error(`${name}: max must be a positive integer`);
   let active = 0;
   const queue = [];
 
@@ -38,7 +39,12 @@ export function createLimiter(max, { queueMax = 1000, name = "limit" } = {}) {
 
   function run(fn) {
     if (queue.length >= queueMax) {
-      return Promise.reject(new VaultError(503, `${name}: too much work queued (${queueMax}); try again shortly`));
+      return Promise.reject(
+        new VaultError(
+          503,
+          `${name}: too much work queued (${queueMax}); try again shortly`,
+        ),
+      );
     }
     return new Promise((resolve, reject) => {
       queue.push({ fn, resolve, reject });
@@ -47,9 +53,20 @@ export function createLimiter(max, { queueMax = 1000, name = "limit" } = {}) {
   }
 
   // map() keeps input order in the result, like Promise.all.
-  const map = (items, fn) => Promise.all(items.map((item, i) => run(() => fn(item, i))));
+  const map = (items, fn) =>
+    Promise.all(items.map((item, i) => run(() => fn(item, i))));
 
-  return { run, map, get active() { return active; }, get queued() { return queue.length; }, max };
+  return {
+    run,
+    map,
+    get active() {
+      return active;
+    },
+    get queued() {
+      return queue.length;
+    },
+    max,
+  };
 }
 
 const envInt = (name, dflt) => {
@@ -59,4 +76,7 @@ const envInt = (name, dflt) => {
 
 // The shared budget for Vault fan-out. 8 is a starting hypothesis measured in
 // docs/optimization.md, not a proven optimum.
-export const vaultFanout = createLimiter(envInt("VCRY_VAULT_FANOUT", 8), { queueMax: envInt("VCRY_VAULT_QUEUE", 4000), name: "vault fan-out" });
+export const vaultFanout = createLimiter(envInt("VCRY_VAULT_FANOUT", 8), {
+  queueMax: envInt("VCRY_VAULT_QUEUE", 4000),
+  name: "vault fan-out",
+});

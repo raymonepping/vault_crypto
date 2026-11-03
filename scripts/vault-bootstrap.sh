@@ -12,7 +12,10 @@ source "$(dirname -- "$0")/common.sh"
 cd "$VCRY_ROOT"
 
 for tool in vault jq podman openssl curl; do
-  command -v "$tool" >/dev/null || { echo "Missing command: $tool" >&2; exit 127; }
+  command -v "$tool" >/dev/null || {
+    echo "Missing command: $tool" >&2
+    exit 127
+  }
 done
 openssl verify -CAfile vault-tls/ca-chain.pem vault-tls/vault.crt >/dev/null 2>&1 || {
   echo "vault-tls/vault.crt does not verify — run make gen-certs" >&2

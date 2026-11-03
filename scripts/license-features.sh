@@ -22,7 +22,11 @@ missing=0
 row() {
   local room=$1 need=$2 got
   if [ "$need" = edition ]; then
-    case "$version" in *+ent*) got="yes (Vault Enterprise $version)" ;; *) got="NO (not Enterprise)"; missing=1 ;; esac
+    case "$version" in *+ent*) got="yes (Vault Enterprise $version)" ;; *)
+      got="NO (not Enterprise)"
+      missing=1
+      ;;
+    esac
   elif has "$need"; then
     got="yes"
   else
@@ -34,8 +38,8 @@ row() {
 
 echo "vault-1 licence: expires $(jq -r '.data.autoloaded.expiration_time' <<<"$status" | cut -c1-10)"
 printf '  %-20s %-34s %s\n' ROOM "NEEDS" "LICENSED"
-row "Quantum PKI" edition                         # ML-DSA PKI; CA key export is Ent
-row "Crypto agility" edition                      # transit/keys/:name/algorithm, ml-dsa, hybrid
+row "Quantum PKI" edition                          # ML-DSA PKI; CA key export is Ent
+row "Crypto agility" edition                       # transit/keys/:name/algorithm, ml-dsa, hybrid
 row "Format-preserving" "Transform Secrets Engine" # FF1 + rewrap (ADP)
 row "Lifecycle" edition
 row "Public CA (opt.)" "PKI External CA Secrets Engine"

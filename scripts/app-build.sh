@@ -13,7 +13,10 @@ for t in $targets; do
   case "$t" in
   api) ctx="$VCRY_ROOT/api" ;;
   web) ctx="$VCRY_ROOT/web" ;;
-  *) echo "app-build: unknown target '$t'" >&2; exit 64 ;;
+  *)
+    echo "app-build: unknown target '$t'" >&2
+    exit 64
+    ;;
   esac
   xattr -rc "$ctx" 2>/dev/null || true
   find "$ctx" -name '._*' -not -path '*/node_modules/*' -delete 2>/dev/null || true

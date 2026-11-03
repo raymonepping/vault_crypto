@@ -12,9 +12,16 @@ source "$(dirname -- "$0")/common.sh"
 set +e
 cd "$VCRY_ROOT"
 
-pass=0; fail=0
-ok()  { printf '  \033[32m✓\033[0m %s\n' "$*"; pass=$((pass + 1)); }
-bad() { printf '  \033[31m✗\033[0m %s\n' "$*"; fail=$((fail + 1)); }
+pass=0
+fail=0
+ok() {
+  printf '  \033[32m✓\033[0m %s\n' "$*"
+  pass=$((pass + 1))
+}
+bad() {
+  printf '  \033[31m✗\033[0m %s\n' "$*"
+  fail=$((fail + 1))
+}
 KC="http://127.0.0.1:$(vcry_conf VCRY_PORT_KEYCLOAK)"
 vault_node vault-1
 export VAULT_ADDR VAULT_CACERT
@@ -43,7 +50,10 @@ declare -A VTOKEN
 echo "people"
 while read -r who groups policies; do
   t=$(kc_token "$who")
-  if [ -z "$t" ]; then bad "$who: Keycloak refused the login"; continue; fi
+  if [ -z "$t" ]; then
+    bad "$who: Keycloak refused the login"
+    continue
+  fi
   c=$(claims "$t")
   got=$(jq -r '.groups | sort | join(",")' <<<"$c")
   [ "$got" = "$groups" ] && ok "$who: Keycloak groups $got" || bad "$who: Keycloak groups $got, want $groups"
@@ -60,7 +70,8 @@ done <<<"$PERSONAS"
 echo "authority (Vault's own answer, sys/capabilities-self)"
 cap() { VAULT_TOKEN="${VTOKEN[$1]}" vault token capabilities "$2" 2>/dev/null; }
 expect() { # persona path allowed|deny description
-  local got; got=$(cap "$1" "$2")
+  local got
+  got=$(cap "$1" "$2")
   if [ "$3" = deny ]; then
     [ "$got" = deny ] && ok "$1 refused: $4" || bad "$1 should be refused: $4 (got $got)"
   else

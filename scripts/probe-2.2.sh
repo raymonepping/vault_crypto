@@ -14,7 +14,10 @@ source "$(dirname -- "$0")/common.sh"
 cd "$VCRY_ROOT"
 
 for tool in vault jq curl openssl podman; do
-  command -v "$tool" >/dev/null || { echo "Missing command: $tool" >&2; exit 127; }
+  command -v "$tool" >/dev/null || {
+    echo "Missing command: $tool" >&2
+    exit 127
+  }
 done
 
 vault_node vault-1
@@ -56,13 +59,19 @@ verr() { jq -r '(.errors // []) | join("; ")' "$TMP/body" 2>/dev/null | tr '\n\t
 row() {
   local area=$1 call=$2 want=$3 detail=$4 got
   case "$code" in 2*) got=ok ;; *) got=refused ;; esac
-  if [ "$got" != "$want" ]; then failed=$((failed + 1)); got="**$got (expected $want)**"; fi
+  if [ "$got" != "$want" ]; then
+    failed=$((failed + 1))
+    got="**$got (expected $want)**"
+  fi
   [ "$want" = refused ] && [ "$got" = refused ] && got="refused, as expected"
   ROWS+=("| $area | \`$call\` | $got ($code) | $detail |")
   printf '  %-12s %-62s %s\n' "$area" "${call:0:62}" "$got"
 }
 # note <area> <what> <result> — a measured fact, not an API call
-note() { ROWS+=("| $1 | $2 | measured | $3 |"); printf '  %-12s %-62s %s\n' "$1" "${2:0:62}" "$3"; }
+note() {
+  ROWS+=("| $1 | $2 | measured | $3 |")
+  printf '  %-12s %-62s %s\n' "$1" "${2:0:62}" "$3"
+}
 
 cleanup_mounts_first
 for m in $MOUNTS; do
