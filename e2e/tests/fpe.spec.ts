@@ -5,7 +5,7 @@ test('FF1: shapes kept, checksums honest, decode equal, rewrap, decode equal aga
   await expect(page.locator('.vg-hero .vg-tile__value').first()).toHaveText('FF1');
   await page.getByRole('button', { name: 'Encode all' }).click();
   const table = page.getByRole('table', { name: 'Fixtures and their FF1 encodings' });
-  await expect(table.getByText('kept')).toHaveCount(16);
+  await expect(table.getByText('kept', { exact: true })).toHaveCount(16);
   await expect(page.getByTestId('fx-iban-1')).toContainText(/NL\d{2}TEST\d{10}/);
   await page.getByRole('button', { name: 'Decode all' }).click();
   await expect(table.getByText('equals the fixture')).toHaveCount(16);

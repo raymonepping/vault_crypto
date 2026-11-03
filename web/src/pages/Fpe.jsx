@@ -147,7 +147,7 @@ export default function Fpe() {
                               <StatePill state="ok">{s.check.checksumName} valid by chance</StatePill>
                             </span>
                           ) : (
-                            <StatePill state="warn">{s.check.checksumName} fails</StatePill>
+                            <StatePill state="warn">{s.check.checksumName} not kept</StatePill>
                           )
                         ) : (
                           <span className="dim">–</span>
