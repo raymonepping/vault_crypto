@@ -10,11 +10,11 @@ VCRY_STATE="$VCRY_ROOT/.secrets/vault"
 export VAULT_CACERT="$VCRY_ROOT/vault-tls/ca-chain.pem"
 unset VAULT_SKIP_VERIFY VAULT_NAMESPACE VAULT_TOKEN VAULT_TLS_SERVER_NAME
 
-# Effective config value: .env overrides config/defaults.env.
+# Effective config value: .env overrides config/defaults.conf.
 vcry_conf() {
   local name=$1 v=""
   [ -f "$VCRY_ROOT/.env" ] && v=$(grep -E "^${name}=" "$VCRY_ROOT/.env" | tail -1 | cut -d= -f2- || true)
-  [ -n "$v" ] || v=$(grep -E "^${name}=" "$VCRY_ROOT/config/defaults.env" | tail -1 | cut -d= -f2- || true)
+  [ -n "$v" ] || v=$(grep -E "^${name}=" "$VCRY_ROOT/config/defaults.conf" | tail -1 | cut -d= -f2- || true)
   printf '%s' "$v"
 }
 

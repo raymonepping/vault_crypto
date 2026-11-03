@@ -1,5 +1,5 @@
 // helpers/env.ts — where things are. Ports come from the same two files the
-// stack reads (config/defaults.env, overridden by .env).
+// stack reads (config/defaults.conf, overridden by .env).
 import fs from 'node:fs';
 import path from 'node:path';
 import tls from 'node:tls';
@@ -18,7 +18,7 @@ function readEnvFile(file: string): Record<string, string> {
   return out;
 }
 
-const merged = { ...readEnvFile(path.join(ROOT, 'config/defaults.env')), ...readEnvFile(path.join(ROOT, '.env')) };
+const merged = { ...readEnvFile(path.join(ROOT, 'config/defaults.conf')), ...readEnvFile(path.join(ROOT, '.env')) };
 
 /** Effective configuration value. Never log VAULT_LICENSE. */
 export function conf(name: string): string {

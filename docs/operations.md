@@ -27,7 +27,7 @@ make e2e-install && make test-ui
 | After editing `api/` or `web/` | `make app-rebuild` (or `TARGETS=api` / `TARGETS=web` for one) |
 | Measure load | see `docs/optimization.md` (`VCRY_STATS=1`, `api/scripts/bench.js`) |
 | After editing `terraform/` | `make tf-all`, then `make tf-plan-all` |
-| After upgrading Vault | change `config/defaults.env`, `make vault-recreate`, then `make probe` and read the diff of `docs/capabilities.md` |
+| After upgrading Vault | change `config/defaults.conf`, `make vault-recreate`, then `make probe` and read the diff of `docs/capabilities.md` |
 
 ## Recover
 

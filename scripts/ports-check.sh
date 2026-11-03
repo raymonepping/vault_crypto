@@ -5,7 +5,7 @@ set -euo pipefail
 # shellcheck source=scripts/common.sh
 source "$(dirname -- "$0")/common.sh"
 
-names=$(grep -hoE '^VCRY_PORT_[A-Z0-9_]+' "$VCRY_ROOT/config/defaults.env" "$VCRY_ROOT/.env" 2>/dev/null | sort -u)
+names=$(grep -hoE '^VCRY_PORT_[A-Z0-9_]+' "$VCRY_ROOT/config/defaults.conf" "$VCRY_ROOT/.env" 2>/dev/null | sort -u)
 published=$(podman ps --format '{{.Names}} {{.Ports}}' 2>/dev/null || true)
 conflicts=0
 for name in $names; do
@@ -29,6 +29,6 @@ for name in $names; do
   fi
 done
 if [ "$conflicts" -gt 0 ]; then
-  echo "$conflicts port(s) taken. Override them in .env (see config/defaults.env)." >&2
+  echo "$conflicts port(s) taken. Override them in .env (see config/defaults.conf)." >&2
   exit 1
 fi

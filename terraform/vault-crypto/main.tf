@@ -34,7 +34,7 @@ variable "vault_url" {
 }
 
 variable "web_cn" {
-  description = "Common name of the web server's certificate (config/defaults.env VCRY_WEB_CN)"
+  description = "Common name of the web server's certificate (config/defaults.conf VCRY_WEB_CN)"
   type        = string
   default     = "crypto.localhost"
 }

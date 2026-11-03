@@ -4,7 +4,7 @@
 #
 # One file holds leaf, issuing CA and key, written atomically: nginx can never
 # load a certificate with the previous key. CN and TTL come from
-# config/defaults.env (VCRY_WEB_CN, VCRY_WEB_TTL) through the environment.
+# config/defaults.conf (VCRY_WEB_CN, VCRY_WEB_TTL) through the environment.
 #
 # `secret`, not `pkiCert`: measured on Vault Agent 2.0.4, pkiCert re-issued a
 # 2-minute certificate only after ~9 minutes (and let the 15-minute web

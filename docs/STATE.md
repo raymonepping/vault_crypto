@@ -10,7 +10,7 @@ Done:
 - Copied from `../vault_pki` (renamed `vpki`→`vcry`): `Makefile`, `scripts/`,
   `compose/{seal,vault,app,common}`, `terraform/{vault-seal,vault-platform}`,
   `vault/`, `e2e/` harness, `DESIGN.md`, `.gitleaks.toml`, `.github/`.
-- `config/defaults.env`: Vault 2.2.1 / 2.2.1-ent, node 24, nginx 1.30.0,
+- `config/defaults.conf`: Vault 2.2.1 / 2.2.1-ent, node 24, nginx 1.30.0,
   alpine 3.24.1; ports 18800/18801/13500/13501.
 - Identities renamed: `cryptolab-api` (API), `web-tls` (tls-agent),
   `crypto-rotator`. The web certificate comes from `pki-classic-int/issue/web`.

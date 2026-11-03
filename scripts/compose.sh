@@ -3,7 +3,7 @@
 # Usage: compose.sh <stack> <compose arguments...>
 #
 # One compose project per stack (vcry-<stack>), all on the shared network
-# vcry-internal. config/defaults.env is loaded first, .env second, so .env wins.
+# vcry-internal. config/defaults.conf is loaded first, .env second, so .env wins.
 set -eu
 
 STACKS="seal vault identity app publicca"
@@ -51,7 +51,7 @@ run_compose() {
     --project-name "vcry-$stack" \
     --project-directory "$project_root/compose/$stack" \
     --file "$compose_file" \
-    --env-file "$project_root/config/defaults.env" \
+    --env-file "$project_root/config/defaults.conf" \
     --env-file "$project_root/.env" \
     "$@"
 }
