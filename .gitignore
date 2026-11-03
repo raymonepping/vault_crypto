@@ -1,0 +1,221 @@
+########################################
+# 🔧 General OS and Editor Files
+########################################
+.DS_Store
+Thumbs.db
+.Spotlight-V100
+.Trashes
+*.log
+*.bak
+*.swp
+*.pid
+git_commit.sh
+FOLDER_TREE.md
+
+########################################
+# 💻 IDE & Editor Configs
+########################################
+.vscode/
+.idea/
+.spyderproject
+.spyproject
+.ropeproject
+
+########################################
+# 🐍 Python
+########################################
+__pycache__/
+*.py[cod]
+*.pyo
+*$py.class
+*.so
+*.egg
+*.egg-info/
+.installed.cfg
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+.python-version
+pip-log.txt
+pip-delete-this-directory.txt
+*.manifest
+*.spec
+*.mo
+*.pot
+*.cover
+*.out
+
+########################################
+# 📦 Python Build and Packaging
+########################################
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+# lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+target/
+
+########################################
+# 🧪 Python Testing and Coverage
+########################################
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+.hypothesis/
+.pytest_cache/
+.pyre/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+########################################
+# 🧬 Python Frameworks
+########################################
+local_settings.py
+db.sqlite3
+instance/
+.webassets-cache
+.scrapy
+docs/_build/
+site/
+celerybeat-schedule
+profile_default/
+ipython_config.py
+
+########################################
+# 📦 Node.js
+########################################
+node_modules/
+npm-debug.log*
+
+########################################
+# 🐳 Docker
+########################################
+*.tar
+docker-compose.override.yml
+
+########################################
+# 🌍 Environment and Config Files
+########################################
+.env
+.env.*
+
+########################################
+# 🛠️ Terraform
+########################################
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfplan
+*.backup
+.terraform.lock.hcl
+*.log
+crash.log
+justfile
+# tfvars often carry real credentials — commit .tfvars.example instead
+*.tfvars
+!*.tfvars.example
+!*.tfvars.sample
+
+########################################
+# 🔐 Private Keys & Certificates
+########################################
+*.pem
+*.key
+*.cert
+*.crt
+*.pfx
+*.p12
+*.p8
+*.jks
+# SSH keys
+id_rsa
+id_rsa.pub
+id_dsa
+id_dsa.pub
+id_ecdsa
+id_ecdsa.pub
+id_ed25519
+id_ed25519.pub
+# Common key/cert directories
+tls/
+certs/
+private/
+secrets/
+.secrets/
+credentials/
+
+########################################
+# 🏛️ HashiCorp Vault
+########################################
+# Vault storage backend — contains keyring and master encryption keys
+vault/vault-data/
+vault-data/
+# Vault init files — contain root tokens and unseal keys
+vault-init.txt
+vault.init
+init.txt
+
+########################################
+# 🍪 Sessions, Cookies & Auth State
+########################################
+cookies.txt
+*cookies*.txt
+*.cookies
+*-state.json
+*-storage-state.json
+sessions/
+.auth/
+.playwright/
+
+########################################
+# ☁️ Cloud Provider Credentials
+########################################
+# AWS
+.aws/credentials
+# GCP
+application_default_credentials.json
+*-service-account.json
+*-sa-key.json
+service_account*.json
+# HCP / generic cloud
+*.token
+token.txt
+
+########################################
+# 🗄️ Database
+########################################
+*.sqlite
+*.sqlite3
+.pgpass
+pgpass
+
+########################################
+# ☸️ Kubernetes
+########################################
+kubeconfig
+.kubeconfig
+kube/config
+
+
+# AI assistant tooling (local only)
+.claude/
+.agents/
+.codex/
+.impeccable/
